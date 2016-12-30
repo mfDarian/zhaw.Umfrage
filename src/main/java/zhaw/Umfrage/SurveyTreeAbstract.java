@@ -155,12 +155,13 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	public final SurveyTreeAbstract getNextSlave() {
 		SurveyTreeAbstract nextSlave = null;
 		int c = actualSlave + 1;
-		if (slaveList.size() >= c) {
+		if (slaveList.size() > c) {
 			nextSlave = slaveList.get(c);
 			if (nextSlave.useMinOwnerScoreToBeReleased || nextSlave.useMaxOwnerScoreToBeReleased) {
-				while(c <= slaveList.size()) {
+				while(c < slaveList.size()) {
 					if (!nextSlave.useMinOwnerScoreToBeReleased || (nextSlave.useMinOwnerScoreToBeReleased && score >= nextSlave.minOwnerScoreToBeReleased)) {
 						if (!nextSlave.useMaxOwnerScoreToBeReleased || (nextSlave.useMaxOwnerScoreToBeReleased && score <= nextSlave.maxOwnerScoreToBeReleased)) {
+							actualSlave = c;
 							return nextSlave;
 						}
 					}
@@ -169,6 +170,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 				}
 			}
 		}
+		actualSlave = -1; // TODO sinnvolles verhalten?
 		return nextSlave;
 	}
 
