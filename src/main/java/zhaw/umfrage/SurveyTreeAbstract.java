@@ -1,11 +1,11 @@
 /**
  * 
  */
-package zhaw.Umfrage;
+package zhaw.umfrage;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * @author Darian
@@ -15,21 +15,21 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	
 	private String text;
 	private SurveyTreeAbstract owner;
-	private ArrayList<SurveyTreeAbstract> slaveList;
+	private ArrayList<SurveyTreeAbstract> itemList;
 	private int sort = 1;
 	private boolean useMinOwnerScoreToBeReleased;
 	private boolean useMaxOwnerScoreToBeReleased;
 	private int minOwnerScoreToBeReleased;
 	private int maxOwnerScoreToBeReleased;
 	private transient int score = 0;
-	private transient int actualSlave = -1;
+	private transient int actualItem = -1;
 	
 	public SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
 		this.text = text;
-		this.slaveList = new ArrayList<SurveyTreeAbstract>();
+		this.itemList = new ArrayList<SurveyTreeAbstract>();
 		if (owner != null) {
 			this.owner = owner;
-			owner.addSlave(this);
+			owner.addItem(this);
 			sort = owner.getMaxSort() + 1;
 		}
 	}
@@ -61,27 +61,27 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return owner;
 	}
 
-	public final void setSlaveList(ArrayList<SurveyTreeAbstract> slaveList) {
-		this.slaveList = slaveList;
+	public final void setItemList(ArrayList<SurveyTreeAbstract> itemList) {
+		this.itemList = itemList;
 		//TODO Exception, um falsche Zuordnungen zu vermeiden?
 	}
 	
-	public final ArrayList<SurveyTreeAbstract> getSlaveList() {
-		return slaveList;
+	public final ArrayList<SurveyTreeAbstract> getItemList() {
+		return itemList;
 	}
 
-	public final void addSlave(SurveyTreeAbstract slave) {
-		if (slaveList.contains(slave)) {
+	public final void addItem(SurveyTreeAbstract item) {
+		if (itemList.contains(item)) {
 			return;
 		}
-		slaveList.add(slave);
+		itemList.add(item);
 		//TODO Exception, um falsche Zuordnungen zu vermeiden?
 	}
 	
 	public final int getMaxSort() {
 		int maxSort = 0;
-		for (SurveyTreeAbstract slave : slaveList) {
-			int sort = slave.getSort();
+		for (SurveyTreeAbstract item : itemList) {
+			int sort = item.getSort();
 			if (sort > maxSort) {
 				maxSort = sort;
 			}
@@ -100,8 +100,54 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		}
 	}
 	
+	public final void moveSortUp() {
+		if (owner != null) {
+			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
+			int i = 0;
+			int thisSort = sort;
+			SurveyTreeAbstract lastItem = null;
+			for (SurveyTreeAbstract item : ownerItemList) {
+				i++;
+				if (item == this) {
+					if (i == 1) {
+						return;
+					} else {
+						setSort(lastItem.getSort());
+						break;
+					}
+				}
+				lastItem = item;
+			}
+			lastItem.setSort(thisSort);
+		}
+	}
+	
+	public final void moveSortDown() {
+		if (owner != null) {
+			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
+			int i = 0;
+			int thisSort = sort;
+			boolean takeNext = false;
+			for (SurveyTreeAbstract item : ownerItemList) {
+				i++;
+				if (takeNext) {
+					setSort(item.getSort());
+					item.setSort(thisSort);
+					break;
+				}
+				if (item == this) {
+					if (i == ownerItemList.size()) {
+						return;
+					} else {
+						takeNext = true;
+					}
+				}
+			}
+		}
+	}
+	
 	protected final void notifySortChange() {
-		Collections.sort(slaveList);
+		Collections.sort(itemList);
 	}
 	
 	public final int getMinOwnerScoreToBeReleased() {
@@ -136,8 +182,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		this.maxOwnerScoreToBeReleased = maxOwnerScoreToBeReleased;
 	}
 
-	protected void notifyScoreChange(SurveyTreeAbstract slave) {
-		int score = this.score + slave.getScore();
+	protected void notifyScoreChange(SurveyTreeAbstract item) {
+		int score = this.score + item.getScore();
 		this.score = score;
 	}
 	
@@ -152,26 +198,26 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return score;
 	}
 	
-	public final SurveyTreeAbstract getNextSlave() {
-		SurveyTreeAbstract nextSlave = null;
-		int c = actualSlave + 1;
-		if (slaveList.size() > c) {
-			nextSlave = slaveList.get(c);
-			if (nextSlave.useMinOwnerScoreToBeReleased || nextSlave.useMaxOwnerScoreToBeReleased) {
-				while(c < slaveList.size()) {
-					if (!nextSlave.useMinOwnerScoreToBeReleased || (nextSlave.useMinOwnerScoreToBeReleased && score >= nextSlave.minOwnerScoreToBeReleased)) {
-						if (!nextSlave.useMaxOwnerScoreToBeReleased || (nextSlave.useMaxOwnerScoreToBeReleased && score <= nextSlave.maxOwnerScoreToBeReleased)) {
-							actualSlave = c;
-							return nextSlave;
+	public final SurveyTreeAbstract getNextItem() {
+		SurveyTreeAbstract nextItem = null;
+		int c = actualItem + 1;
+		if (itemList.size() > c) {
+			nextItem = itemList.get(c);
+			if (nextItem.getUseMinOwnerScoreToBeReleased() || nextItem.getUseMaxOwnerScoreToBeReleased()) {
+				while(c < itemList.size()) {
+					if (!nextItem.getUseMinOwnerScoreToBeReleased() || (nextItem.getUseMinOwnerScoreToBeReleased() && score >= nextItem.getMinOwnerScoreToBeReleased())) {
+						if (!nextItem.getUseMaxOwnerScoreToBeReleased() || (nextItem.getUseMaxOwnerScoreToBeReleased() && score <= nextItem.getMaxOwnerScoreToBeReleased())) {
+							actualItem = c;
+							return nextItem;
 						}
 					}
 					c++;
-					nextSlave = slaveList.get(c);
+					nextItem = itemList.get(c);
 				}
 			}
 		}
-		actualSlave = -1; // TODO sinnvolles verhalten?
-		return nextSlave;
+		actualItem = -1; // TODO sinnvolles verhalten?
+		return nextItem;
 	}
 
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package zhaw.Umfrage;
+package zhaw.umfrage;
 
 /**
  * @author Darian

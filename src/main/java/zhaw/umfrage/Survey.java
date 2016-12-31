@@ -1,7 +1,7 @@
 /**
  * 
  */
-package zhaw.Umfrage;
+package zhaw.umfrage;
 
 import java.io.*;
 
@@ -29,11 +29,11 @@ public class Survey extends SurveyTreeAbstract{
 	
 	public void printChain() {
 		System.out.println(getText());
-		for (SurveyTreeAbstract questionnaire : getSlaveList()) {
+		for (SurveyTreeAbstract questionnaire : getItemList()) {
 			System.out.println("_ " + questionnaire.getText());
-			for (SurveyTreeAbstract question : questionnaire.getSlaveList()) {
+			for (SurveyTreeAbstract question : questionnaire.getItemList()) {
 				System.out.println(" - " + question.getText());
-				for (SurveyTreeAbstract answer : question.getSlaveList()) {
+				for (SurveyTreeAbstract answer : question.getItemList()) {
 					System.out.println("  + " + answer.getText());
 				}
 			}
