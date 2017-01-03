@@ -11,8 +11,18 @@ import java.io.*;
  */
 public class Survey extends SurveyTreeAbstract{
 	
+	private static final long serialVersionUID = 1L;
+	
 	public Survey(String text) {
 		super(text, null);
+	}
+	
+	public Class getOwnerClass() {
+		return null;
+	}
+	
+	public Class getItemClass() {
+		return Questionnaire.class;
 	}
 	
 	// Temporär hier
@@ -24,6 +34,19 @@ public class Survey extends SurveyTreeAbstract{
 		} catch (IOException ex) {
 			ex.printStackTrace(); //TODO
 		}
+	}
+	
+	public void saveToFile(File file) throws IOException {
+		ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
+		os.writeObject(this);
+		os.close();
+	}
+	
+	public static Survey getFromFile(File file) throws Exception {
+		ObjectInputStream is = new ObjectInputStream(new FileInputStream(file));
+		Survey survey = (Survey) is.readObject();
+		is.close();
+		return survey;
 	}
 	
 	

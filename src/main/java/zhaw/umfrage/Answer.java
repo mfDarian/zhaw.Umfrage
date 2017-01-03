@@ -9,12 +9,21 @@ package zhaw.umfrage;
  */
 public class Answer extends SurveyTreeAbstract {
 	
+	private static final long serialVersionUID = 1L;
 	private int scoreIfChosen = 0;
 	private int scoreIfUnchosen = 0;
 	private transient boolean chosen;
 	
 	public Answer(Question owner, String text) {
 		super(text, owner);
+	}
+	
+	public Class getOwnerClass() {
+		return Question.class;
+	}
+	
+	public Class getItemClass() {
+		return null;
 	}
 
 	public final int getScoreIfChosen() {

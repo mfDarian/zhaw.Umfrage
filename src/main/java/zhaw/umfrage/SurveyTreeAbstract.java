@@ -13,6 +13,7 @@ import java.io.Serializable;
  */
 public abstract class SurveyTreeAbstract implements Serializable, Comparable<SurveyTreeAbstract> {
 	
+	private static final long serialVersionUID = 1L;
 	private String text;
 	private SurveyTreeAbstract owner;
 	private ArrayList<SurveyTreeAbstract> itemList;
@@ -34,6 +35,10 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		}
 	}
 	
+	public final String toString() {
+		return text;
+	}
+	
 	public final int compareTo(SurveyTreeAbstract o) {
 		if (sort > o.sort) {
 			return 1;
@@ -52,6 +57,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return text;
 	}
 	
+	public abstract Class getOwnerClass();
+	
 	protected final void setOwner(SurveyTreeAbstract owner) {
 		this.owner = owner;
 		//TODO Exception, um falsche Zuordnungen zu vermeiden?
@@ -60,8 +67,13 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	public final SurveyTreeAbstract getOwner() {
 		return owner;
 	}
+	
+	public abstract Class getItemClass();
 
 	public final void setItemList(ArrayList<SurveyTreeAbstract> itemList) {
+		if (itemList == null) {
+			return;
+		}
 		this.itemList = itemList;
 		//TODO Exception, um falsche Zuordnungen zu vermeiden?
 	}
@@ -75,7 +87,16 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 			return;
 		}
 		itemList.add(item);
+		item.setOwner(this);
 		//TODO Exception, um falsche Zuordnungen zu vermeiden?
+	}
+	
+	public final void removeItem(SurveyTreeAbstract item) {
+		if (!itemList.contains(item)) {
+			return;
+		}
+		itemList.remove(item);
+		item.setOwner(null);
 	}
 	
 	public final int getMaxSort() {
