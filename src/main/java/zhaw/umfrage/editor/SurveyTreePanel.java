@@ -51,12 +51,16 @@ class SurveyTreePanel extends JPanel {
 	private JTextField textField;
 	private JButton saveButton;
 	
-	protected SurveyTreePanel(SurveyEditor owner) {
+	protected SurveyTreePanel(SurveyEditor owner, Survey survey) {
 		super(new GridLayout(1,2));
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		this.owner = owner;
-		this.survey = new Survey("New Survey");
-		root = new DefaultMutableTreeNode(survey);
+		if (survey == null) {
+			this.survey = new Survey("New Survey");
+		} else {
+			this.survey = survey;
+		}
+		root = new DefaultMutableTreeNode(this.survey);
 		treeModel = new SurveyTreeModel(root);
 		treeModel.addTreeModelListener(new SurveyTreeModelListener());
 		tree = new JTree(treeModel);
@@ -217,7 +221,9 @@ class SurveyTreePanel extends JPanel {
 	    
 	    root = new DefaultMutableTreeNode(survey);
 	    treeModel = new SurveyTreeModel(root);
+	    tree.setModel(null);
 	    tree.setModel(treeModel);
+	    tree.validate();
 	    
 	    for (SurveyTreeAbstract questionnaire : survey.getItemList()) {
 	    	questionnaireNode = new DefaultMutableTreeNode(questionnaire);
@@ -360,6 +366,7 @@ class SurveyTreePanel extends JPanel {
 
         toolkit.beep();
     }
+    
     
 	private void setFieldValues(SurveyTreeAbstract t) {
 		if (t != null) {

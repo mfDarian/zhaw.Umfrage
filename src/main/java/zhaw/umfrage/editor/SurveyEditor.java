@@ -52,7 +52,7 @@ public class SurveyEditor extends JPanel implements ActionListener {
         this.frame = frame;
         
         //Create the components.
-        treePanel = new SurveyTreePanel(this);
+        treePanel = new SurveyTreePanel(this, null);
         populateTree(treePanel);
         
         addButton = new JButton("Add");
