@@ -134,10 +134,10 @@ public class SurveyTreeTableModel implements TableModel{
 		switch(columnIndex) {
 		case 0: return t.getText();
 		case 1: return new Integer(t.getSort());
-		case 2: return t.getUseMinOwnerScoreToBeReleased() ? Boolean.TRUE : Boolean.FALSE;
-		case 3: return new Integer(t.getMinOwnerScoreToBeReleased());
-		case 4: return t.getUseMaxOwnerScoreToBeReleased() ? Boolean.TRUE : Boolean.FALSE;
-		case 5: return new Integer(t.getMaxOwnerScoreToBeReleased());
+		case 2: return t.getMinOwnerScoreRequired() ? Boolean.TRUE : Boolean.FALSE;
+		case 3: return new Integer(t.getMinOwnerScore());
+		case 4: return t.getMaxOwnerScoreAllowed() ? Boolean.TRUE : Boolean.FALSE;
+		case 5: return new Integer(t.getMaxOwnerScore());
 		default: return null;
 		}
 	}

@@ -4,6 +4,7 @@
 package zhaw.umfrage;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * @author Darian
@@ -17,12 +18,21 @@ public class Survey extends SurveyTreeAbstract{
 		super(text, null);
 	}
 	
-	public Class getOwnerClass() {
-		return null;
+	@Override
+	public SurveyTreeAbstract insertItem(String text) {
+		Questionnaire q = new Questionnaire(this, text);
+		super.addItem(q);
+		return q;
+		
 	}
 	
-	public Class getItemClass() {
-		return Questionnaire.class;
+	@Override
+	public SurveyTreeAbstract insertItem() {
+		return insertItem("New Questionnaire");
+	}
+	
+	public void clear() {
+		itemList = new ArrayList<>();
 	}
 	
 	// Temporär hier
@@ -62,5 +72,9 @@ public class Survey extends SurveyTreeAbstract{
 			}
 		}
 	}
+
+
+
+
 	
 }

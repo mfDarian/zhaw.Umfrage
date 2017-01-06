@@ -298,8 +298,8 @@ class SurveyTreePanel extends JPanel {
     /** Remove all nodes except the root node. */
     public void clear() {
         root.removeAllChildren();
+        survey.clear();
         treeModel.reload();
-        survey.setItemList(new ArrayList<SurveyTreeAbstract>());
     }
 
     /** Remove the currently selected node. */
@@ -337,15 +337,7 @@ class SurveyTreePanel extends JPanel {
     public void addObject(TreePath parentPath) {
     	DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) parentPath.getLastPathComponent();
 		SurveyTreeAbstract parent = (SurveyTreeAbstract) parentNode.getUserObject();
-    	Class childClass = parent.getItemClass();
-		SurveyTreeAbstract child = null;
-		if (childClass == Questionnaire.class) {
-			child = new Questionnaire((Survey) parent, "New Questionnaire");
-		} else if (childClass == Question.class) {
-			child = new Question((Questionnaire) parent, "New Question");
-		} else if (childClass == Answer.class) {
-			child = new Answer((Question) parent, "New Answer");
-		}
+		SurveyTreeAbstract child = parent.insertItem();
 		if (child != null) {
 			DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
 			treeModel.insertNodeInto(childNode, parentNode, parentNode.getChildCount());
@@ -374,10 +366,10 @@ class SurveyTreePanel extends JPanel {
 		if (t != null) {
 			textField.setText(t.getText());
 			sortSpinner.setValue((Integer)t.getSort());
-			minBox.setSelected(t.getUseMinOwnerScoreToBeReleased());
-			minSpinner.setValue(t.getMinOwnerScoreToBeReleased());
-			maxBox.setSelected(t.getUseMaxOwnerScoreToBeReleased());
-			maxSpinner.setValue(t.getMaxOwnerScoreToBeReleased());
+			minBox.setSelected(t.getMinOwnerScoreRequired());
+			minSpinner.setValue(t.getMinOwnerScore());
+			maxBox.setSelected(t.getMaxOwnerScoreAllowed());
+			maxSpinner.setValue(t.getMaxOwnerScore());
 			if (t.getClass() == Answer.class) {
 				Answer a = (Answer)t;
 				chosenSpinner.setValue((Integer)a.getScoreIfChosen());
@@ -422,10 +414,10 @@ class SurveyTreePanel extends JPanel {
 				SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 				t.setText(textField.getText());
 				t.setSort((int)sortSpinner.getValue());
-				t.setUseMinOwnerScoreToBeReleased((boolean)minBox.isSelected());
-				t.setMinOwnerScoreToBeReleased((int)minSpinner.getValue());
-				t.setUseMaxOwnerScoreToBeReleased((boolean)maxBox.isSelected());
-				t.setMaxOwnerScoreToBeReleased((int)maxSpinner.getValue());
+				t.setMinOwnerScoreRequired((boolean)minBox.isSelected());
+				t.setMinOwnerScore((int)minSpinner.getValue());
+				t.setMaxOwnerScoreAllowed((boolean)maxBox.isSelected());
+				t.setMaxOwnerScore((int)maxSpinner.getValue());
 				if (t.getClass() == Answer.class) {
 					Answer a = (Answer)t;
 					a.setScoreIfChosen((int)chosenSpinner.getValue());
@@ -524,10 +516,13 @@ class SurveyTreePanel extends JPanel {
             //System.out.println("New value: " + node.getUserObject());
         }
         public void treeNodesInserted(TreeModelEvent e) {
+        	System.out.println("treeNodesInserted");
         }
         public void treeNodesRemoved(TreeModelEvent e) {
+        	System.out.println("treeNodesRemoved");
         }
         public void treeStructureChanged(TreeModelEvent e) {
+        	System.out.println("treeStructureChanged");
         }
     }
     

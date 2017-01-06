@@ -16,29 +16,34 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	private static final long serialVersionUID = 1L;
 	private String text;
 	private SurveyTreeAbstract owner;
-	private ArrayList<SurveyTreeAbstract> itemList;
-	private int sort = 1;
-	private boolean useMinOwnerScoreToBeReleased;
-	private boolean useMaxOwnerScoreToBeReleased;
-	private int minOwnerScoreToBeReleased;
-	private int maxOwnerScoreToBeReleased;
+	protected ArrayList<SurveyTreeAbstract> itemList;
+	private int sort = 0;
+	private boolean minOwnerScoreRequired;
+	private boolean maxOwnerScoreAllowed;
+	private int minOwnerScore;
+	private int maxOwnerScore;
 	private transient int score = 0;
 	private transient int actualItem = -1;
 	
-	public SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
+	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
 		this.text = text;
 		this.itemList = new ArrayList<SurveyTreeAbstract>();
 		if (owner != null) {
 			this.owner = owner;
-			owner.addItem(this);
 			sort = owner.getMaxSort() + 1;
 		}
 	}
 	
+	protected final void addItem(SurveyTreeAbstract item) {
+		itemList.add(item);
+	}
+	
+	@Override
 	public final String toString() {
 		return text;
 	}
 	
+	@Override
 	public final int compareTo(SurveyTreeAbstract o) {
 		if (sort > o.sort) {
 			return 1;
@@ -57,46 +62,24 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return text;
 	}
 	
-	public abstract Class getOwnerClass();
-	
-	protected final void setOwner(SurveyTreeAbstract owner) {
-		this.owner = owner;
-		//TODO Exception, um falsche Zuordnungen zu vermeiden?
-	}
 	
 	public final SurveyTreeAbstract getOwner() {
 		return owner;
 	}
 	
-	public abstract Class getItemClass();
-
-	public final void setItemList(ArrayList<SurveyTreeAbstract> itemList) {
-		if (itemList == null) {
-			return;
-		}
-		this.itemList = itemList;
-		//TODO Exception, um falsche Zuordnungen zu vermeiden?
-	}
-	
 	public final ArrayList<SurveyTreeAbstract> getItemList() {
 		return itemList;
 	}
-
-	public final void addItem(SurveyTreeAbstract item) {
-		if (itemList.contains(item)) {
-			return;
-		}
-		itemList.add(item);
-		item.setOwner(this);
-		//TODO Exception, um falsche Zuordnungen zu vermeiden?
-	}
 	
+	public abstract SurveyTreeAbstract insertItem(String text);
+	
+	public abstract SurveyTreeAbstract insertItem();
+
 	public final void removeItem(SurveyTreeAbstract item) {
 		if (!itemList.contains(item)) {
 			return;
 		}
 		itemList.remove(item);
-		item.setOwner(null);
 	}
 	
 	public final int getMaxSort() {
@@ -171,36 +154,36 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		Collections.sort(itemList);
 	}
 	
-	public final int getMinOwnerScoreToBeReleased() {
-		return minOwnerScoreToBeReleased;
+	public final int getMinOwnerScore() {
+		return minOwnerScore;
 	}
 	
-	public final void setUseMinOwnerScoreToBeReleased(boolean useMinOwnerScoreToBeReleased) {
-		this.useMinOwnerScoreToBeReleased = useMinOwnerScoreToBeReleased;
+	public final void setMinOwnerScoreRequired(boolean minOwnerScoreRequired) {
+		this.minOwnerScoreRequired = minOwnerScoreRequired;
 	}
 	
-	public final boolean getUseMinOwnerScoreToBeReleased() {
-		return useMinOwnerScoreToBeReleased;
+	public final boolean getMinOwnerScoreRequired() {
+		return minOwnerScoreRequired;
 	}
 
-	public final void setUseMaxOwnerScoreToBeReleased(boolean useMaxOwnerScoreToBeReleased) {
-		this.useMaxOwnerScoreToBeReleased = useMaxOwnerScoreToBeReleased;
+	public final void setMaxOwnerScoreAllowed(boolean maxOwnerScoreAllowed) {
+		this.maxOwnerScoreAllowed = maxOwnerScoreAllowed;
 	}
 	
-	public final boolean getUseMaxOwnerScoreToBeReleased() {
-		return useMaxOwnerScoreToBeReleased;
+	public final boolean getMaxOwnerScoreAllowed() {
+		return maxOwnerScoreAllowed;
 	}
 	
-	public final void setMinOwnerScoreToBeReleased(int minOwnerScoreToBeReleased) {
-		this.minOwnerScoreToBeReleased = minOwnerScoreToBeReleased;
+	public final void setMinOwnerScore(int minOwnerScore) {
+		this.minOwnerScore = minOwnerScore;
 	}
 
-	public final int getMaxOwnerScoreToBeReleased() {
-		return maxOwnerScoreToBeReleased;
+	public final int getMaxOwnerScore() {
+		return maxOwnerScore;
 	}
 
-	public final void setMaxOwnerScoreToBeReleased(int maxOwnerScoreToBeReleased) {
-		this.maxOwnerScoreToBeReleased = maxOwnerScoreToBeReleased;
+	public final void setMaxOwnerScore(int maxOwnerScore) {
+		this.maxOwnerScore = maxOwnerScore;
 	}
 
 	protected void notifyScoreChange(SurveyTreeAbstract item) {
@@ -224,10 +207,10 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		int c = actualItem + 1;
 		if (itemList.size() > c) {
 			nextItem = itemList.get(c);
-			if (nextItem.getUseMinOwnerScoreToBeReleased() || nextItem.getUseMaxOwnerScoreToBeReleased()) {
+			if (nextItem.getMinOwnerScoreRequired() || nextItem.getMaxOwnerScoreAllowed()) {
 				while(c < itemList.size()) {
-					if (!nextItem.getUseMinOwnerScoreToBeReleased() || (nextItem.getUseMinOwnerScoreToBeReleased() && score >= nextItem.getMinOwnerScoreToBeReleased())) {
-						if (!nextItem.getUseMaxOwnerScoreToBeReleased() || (nextItem.getUseMaxOwnerScoreToBeReleased() && score <= nextItem.getMaxOwnerScoreToBeReleased())) {
+					if (!nextItem.getMinOwnerScoreRequired() || (nextItem.getMinOwnerScoreRequired() && score >= nextItem.getMinOwnerScore())) {
+						if (!nextItem.getMaxOwnerScoreAllowed() || (nextItem.getMaxOwnerScoreAllowed() && score <= nextItem.getMaxOwnerScore())) {
 							actualItem = c;
 							return nextItem;
 						}

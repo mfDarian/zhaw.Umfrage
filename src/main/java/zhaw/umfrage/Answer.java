@@ -18,11 +18,13 @@ public class Answer extends SurveyTreeAbstract {
 		super(text, owner);
 	}
 	
-	public Class getOwnerClass() {
-		return Question.class;
+	@Override
+	public SurveyTreeAbstract insertItem(String text) {
+		return null;
 	}
-	
-	public Class getItemClass() {
+
+	@Override
+	public SurveyTreeAbstract insertItem() {
 		return null;
 	}
 
@@ -54,5 +56,9 @@ public class Answer extends SurveyTreeAbstract {
 		}
 		this.chosen = chosen;
 	}
+
+
+
+
 
 }

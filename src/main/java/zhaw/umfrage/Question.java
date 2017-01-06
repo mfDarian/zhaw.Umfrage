@@ -13,16 +13,36 @@ public class Question extends SurveyTreeAbstract {
 	private int minAnswersToChose = 0;
 	private int maxAnswersToChose = 0;
 	
-	public Question(Questionnaire owner, String text){
+	protected Question(Questionnaire owner, String text){
 		super(text, owner);
 	}
-	
-	public Class getOwnerClass() {
-		return Questionnaire.class;
+
+	@Override
+	public SurveyTreeAbstract insertItem(String text) {
+		Answer a = new Answer(this, text);
+		super.addItem(a);
+		return a;
 	}
-	
-	public Class getItemClass() {
-		return Answer.class;
+
+	@Override
+	public SurveyTreeAbstract insertItem() {
+		return insertItem("New Answer");
+	}
+
+	public int getMinAnswersToChose() {
+		return minAnswersToChose;
+	}
+
+	public void setMinAnswersToChose(int minAnswersToChose) {
+		this.minAnswersToChose = minAnswersToChose;
+	}
+
+	public int getMaxAnswersToChose() {
+		return maxAnswersToChose;
+	}
+
+	public void setMaxAnswersToChose(int maxAnswersToChose) {
+		this.maxAnswersToChose = maxAnswersToChose;
 	}
 	
 }
