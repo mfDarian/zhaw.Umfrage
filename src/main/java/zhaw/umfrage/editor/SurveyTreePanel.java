@@ -1,7 +1,6 @@
 package zhaw.umfrage.editor;
 
 import java.util.ArrayList;
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
