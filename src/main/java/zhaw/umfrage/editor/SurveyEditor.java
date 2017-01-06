@@ -3,16 +3,25 @@ package zhaw.umfrage.editor;
 import java.io.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.tree.TreePath;
 import zhaw.umfrage.*;
 
@@ -66,11 +75,28 @@ public class SurveyEditor extends JPanel implements ActionListener {
         treePanel.setPreferredSize(new Dimension(300, 150));
         add(treePanel, BorderLayout.CENTER);
 
-        JPanel panel = new JPanel(new GridLayout(0,3));
-        panel.add(addButton);
-        panel.add(removeButton); 
-        panel.add(clearButton);
-        add(panel, BorderLayout.SOUTH);
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.5;
+        gbc.gridwidth = 5;
+        buttonPanel.add(addButton, gbc);
+        gbc.gridx = 6;
+        buttonPanel.add(removeButton, gbc); 
+        gbc.gridx = 12;
+        buttonPanel.add(clearButton, gbc);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.gridx = 5;
+        gbc.gridwidth = 1;
+        buttonPanel.add(new JLabel(" "), gbc);
+        gbc.gridx = 11;
+        buttonPanel.add(new JLabel(" "), gbc);
+        
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     public void populateTree(SurveyTreePanel treePanel) {
@@ -156,25 +182,42 @@ public class SurveyEditor extends JPanel implements ActionListener {
      */
     private static void createAndShowGUI() {
         //Create and set up the window.
+        try {
+        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+
         JFrame frame = new JFrame("Survey Editor");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Image img = new ImageIcon("Binary-tree-icon.png").getImage();
+        frame.setIconImage(img);
+        
+        Insets s = new Insets(2,10,2,10);
+        Insets s2 = new Insets(0,-30,0,10);
 
         JMenuBar menuBar = new JMenuBar();
         JMenu menuFile = new JMenu("File");
+        menuFile.setMargin(s);
         JMenuItem menuNew = new JMenuItem("New");
         menuNew.setActionCommand(NEW_COMMAND);
+        menuNew.setMargin(s2);
         JMenuItem menuOpen = new JMenuItem("Open");
         menuOpen.setActionCommand(OPEN_COMMAND);
+        menuOpen.setMargin(s2);
         JMenuItem menuSave = new JMenuItem("Save");
         menuSave.setActionCommand(SAVE_COMMAND);
+        menuSave.setMargin(s2);;
         JMenuItem menuSaveAs = new JMenuItem("Save as...");
         menuSaveAs.setActionCommand(SAVE_AS_COMMAND);
+        menuSaveAs.setMargin(s2);
 
         menuFile.add(menuNew);
 		menuFile.add(menuOpen);
 		menuFile.add(menuSave);
 		menuFile.add(menuSaveAs);
 		menuBar.add(menuFile);
+		
 		frame.setJMenuBar(menuBar);
 
         //Create and set up the content pane.
@@ -189,12 +232,11 @@ public class SurveyEditor extends JPanel implements ActionListener {
         menuSaveAs.addActionListener(newContentPane);
 
         //Display the window.
+        frame.setMinimumSize(new Dimension(1000, 1000));
         frame.pack();
+        frame.setLocationByPlatform(true);
         frame.setVisible(true);
 
-
-    
-    
     }
 
     public static void main(String[] args) {
