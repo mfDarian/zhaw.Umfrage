@@ -37,6 +37,7 @@ public class SurveyEditor extends JPanel implements ActionListener {
 	static String OPEN_COMMAND = "open";
 	static String SAVE_COMMAND = "save";
     static String SAVE_AS_COMMAND = "save_as";
+    static String DEBUG_COMMAND = "toggle_debug";
 	
 	private static String ADD_COMMAND = "add";
     private JButton addButton;
@@ -124,6 +125,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
             //Clear button clicked.
         	treePanel.unselect();
             treePanel.clear();
+        } else if (DEBUG_COMMAND.equals(command)) {
+        	treePanel.toggleDebug();
         } else if (NEW_COMMAND.equals(command)) {
         	actualFile = null;
         	treePanel.setNewSurvey();
@@ -210,11 +213,16 @@ public class SurveyEditor extends JPanel implements ActionListener {
         JMenuItem menuSaveAs = new JMenuItem("Save as...");
         menuSaveAs.setActionCommand(SAVE_AS_COMMAND);
         menuSaveAs.setMargin(s2);
+        
+        JMenuItem menuDebug = new JMenuItem("Toggle Debug");
+        menuDebug.setActionCommand(DEBUG_COMMAND);
+        menuDebug.setMargin(s2);
 
         menuFile.add(menuNew);
 		menuFile.add(menuOpen);
 		menuFile.add(menuSave);
 		menuFile.add(menuSaveAs);
+		menuFile.add(menuDebug);
 		menuBar.add(menuFile);
 		
 		frame.setJMenuBar(menuBar);
@@ -229,6 +237,7 @@ public class SurveyEditor extends JPanel implements ActionListener {
         menuOpen.addActionListener(newContentPane);
         menuSave.addActionListener(newContentPane);
         menuSaveAs.addActionListener(newContentPane);
+        menuDebug.addActionListener(newContentPane);
 
         //Display the window.
         frame.setMinimumSize(new Dimension(1000, 1000));
