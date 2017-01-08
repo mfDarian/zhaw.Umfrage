@@ -25,7 +25,7 @@ import javax.swing.tree.TreePath;
 import zhaw.umfrage.*;
 
 // Test Dani
-
+//Test von Swen
 public class SurveyEditor extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
