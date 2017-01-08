@@ -5,6 +5,7 @@ package zhaw.umfrage.interview;
 
 import zhaw.umfrage.Survey;
 
+
 /**
  * @author Darian
  *
@@ -14,6 +15,7 @@ public class Interview {
 	transient Survey survey;
 	private String interviewer;
 	private String interviewee;
+	
 	
 	
 	public Interview(Survey survey) {
@@ -39,5 +41,7 @@ public class Interview {
 	public String getInterviewee() {
 		return interviewee;
 	}
+	
+	
 
 }

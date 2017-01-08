@@ -391,7 +391,8 @@ class SurveyTreePanel extends JPanel {
 				s.setText(text);
 				textField.setText(text);
 			}
-			tree.repaint();
+			//tree.repaint(); TODO hack
+			setSurvey(survey);
 		}
     	
     }
@@ -416,7 +417,8 @@ class SurveyTreePanel extends JPanel {
 					a.setScoreIfUnchosen((int)unchosenSpinner.getValue());
 				}
 			
-				tree.repaint();
+				//tree.repaint(); TODO hack
+				setSurvey(survey);
 			}
 			
 		}
