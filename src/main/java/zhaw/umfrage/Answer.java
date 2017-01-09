@@ -50,9 +50,9 @@ public class Answer extends SurveyTreeAbstract {
 
 	public final void setChosen(boolean chosen) {
 		if (chosen) {
-			setScore(getScore() + scoreIfChosen);
+			setScore(scoreIfChosen);
 		} else {
-			setScore(getScore() + scoreIfUnchosen);
+			setScore(scoreIfUnchosen);
 		}
 		this.chosen = chosen;
 	}
