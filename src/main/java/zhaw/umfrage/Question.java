@@ -77,6 +77,10 @@ public class Question extends SurveyTreeAbstract {
 	public final void setMaxAnswersToChose(int maxAnswersToChose) {
 		this.maxAnswersToChose = maxAnswersToChose;
 	}
+	
+	public final boolean isSingleSelect() {
+		return (maxAnswersToChose == 1);
+	}
 
 	public boolean isAnswered() {
 		return answered;
