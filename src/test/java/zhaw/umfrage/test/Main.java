@@ -1,6 +1,7 @@
 package zhaw.umfrage.test;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import zhaw.umfrage.*;
 
@@ -27,6 +28,21 @@ public class Main {
 					break;
 				} else {
 					System.out.println(q);
+					if (q.toString().equals("Möchten Sie an einer Umfrage zu Ernährung teilnehmen?")) {
+						ArrayList<SurveyTreeAbstract> al = q.getItemList();
+						Answer a = (Answer) al.get(0);
+						System.out.println(a);
+						a.setChosen(true);
+						try {
+							q.setAnswered(true);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						System.out.println("Score of Answer: " + a.getScore());
+						System.out.println("Score of Question: " + q.getScore());
+						System.out.println("Score of Questionnaire: " + t.getScore());
+						System.out.println("Score of Survey: " + survey.getScore());
+					}
 				}
 			}
 		}
