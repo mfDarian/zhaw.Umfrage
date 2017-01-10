@@ -1,6 +1,7 @@
 package zhaw.umfrage.editor;
 
 import java.util.ArrayList;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -31,6 +32,7 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+
 import zhaw.umfrage.*;
 
 class SurveyTreePanel extends JPanel {
@@ -41,16 +43,16 @@ class SurveyTreePanel extends JPanel {
 	private DefaultMutableTreeNode root;
 	private DefaultTreeModel treeModel;
 	private JTree tree;
-	private ArrayList<TreePath> collapsedPaths = new ArrayList<>();
-	private TreePath storedSelectedPath;
+	private ArrayList<SurveyTreeAbstract> collapsedObjects = new ArrayList<>();
+	private SurveyTreeAbstract storedSelectedObject;
 	private Toolkit toolkit = Toolkit.getDefaultToolkit();
 	private boolean debug;
 	
-	private JLabel textLabel, sortLabel, minLabel, maxLabel, chosenLabel, unchosenLabel;
-	private JSpinner sortSpinner, minSpinner, maxSpinner, chosenSpinner, unchosenSpinner;
+	private JLabel textLabel, minLabel, maxLabel, chosenLabel, unchosenLabel;
+	private JSpinner minSpinner, maxSpinner, chosenSpinner, unchosenSpinner;
 	private JCheckBox minBox, maxBox;
 	private JTextField textField;
-	private JButton saveButton;
+	private JButton sortUpButton, sortDownButton, saveButton;
 	
 	protected SurveyTreePanel(SurveyEditor owner, Survey survey) {
 		super(new GridLayout(1,2));
@@ -98,18 +100,25 @@ class SurveyTreePanel extends JPanel {
         gbc.gridwidth = 3;
         detailPanel.add(textField, gbc);
         
-        sortLabel = new JLabel("Set sorting");
+        sortUpButton = new JButton("Sort up");
+        sortUpButton.setIcon(new ImageIcon("Icons/sort-up.png"));
+        sortUpButton.setIconTextGap(10);
+        sortUpButton.setEnabled(false);
+        sortUpButton.addActionListener(new SortUpListener());
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 3;
-        detailPanel.add(sortLabel, gbc);
+        gbc.gridwidth = 1;
+        detailPanel.add(sortUpButton, gbc);
         
-        sortSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
-        sortSpinner.setEnabled(false);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 3;
-        detailPanel.add(sortSpinner, gbc);
+        sortDownButton = new JButton("Sort down");
+        sortDownButton.setIcon(new ImageIcon("Icons/sort-down.png"));
+        sortDownButton.setIconTextGap(10);
+        sortDownButton.setEnabled(false);
+        sortDownButton.addActionListener(new SortDownListener());
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        detailPanel.add(sortDownButton, gbc);
         
         minLabel = new JLabel("Set min. owner score to be released");
         gbc.gridx = 0;
@@ -159,7 +168,7 @@ class SurveyTreePanel extends JPanel {
         
         chosenSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
         chosenSpinner.setEnabled(false);
-        gbc.gridx = 1;
+        gbc.gridx = 2;
         gbc.gridy = 8;
         gbc.gridwidth = 1;
         detailPanel.add(chosenSpinner, gbc);
@@ -172,7 +181,7 @@ class SurveyTreePanel extends JPanel {
         
         unchosenSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
         unchosenSpinner.setEnabled(false);
-        gbc.gridx = 1;
+        gbc.gridx = 2;
         gbc.gridy = 9;
         gbc.gridwidth = 1;
         detailPanel.add(unchosenSpinner, gbc);
@@ -186,6 +195,7 @@ class SurveyTreePanel extends JPanel {
         detailPanel.add(saveButton, gbc);
         
         add(detailPanel);
+	
 	}
 	
 	protected Survey getSurvey() {
@@ -197,18 +207,13 @@ class SurveyTreePanel extends JPanel {
 	}
 	
 	public void setSurvey(Survey survey) {
+		storeCollapseStatus();
 		this.survey = survey;
 		root.removeAllChildren();
 		root.setUserObject(survey);
 		treeModel.setRoot(root);
-		//root = new DefaultMutableTreeNode(survey);
-		//treeModel = new SurveyTreeModel(root);
-		//tree.setModel(treeModel);
 		drawTree();
-		//treeModel.reload();
-		//treeModel.addTreeModelListener(new SurveyTreeModelListener());
-		//tree.repaint();
-		//expand();
+		restoreCollapseStatus();
 	}
 	
 
@@ -216,13 +221,6 @@ class SurveyTreePanel extends JPanel {
 		DefaultMutableTreeNode questionnaireNode = null;
 	    DefaultMutableTreeNode questionNode = null;
 	    DefaultMutableTreeNode answerNode = null;
-	    
-	    /*
-	    for (int i = 0; i < listeners.length; i++) {
-	    	treeModel.removeTreeModelListener((TreeModelListener)listeners[i]);
-	    }
-	    */
-	    
 	    
 	    for (SurveyTreeAbstract questionnaire : survey.getItemList()) {
 	    	questionnaireNode = new DefaultMutableTreeNode(questionnaire);
@@ -242,54 +240,64 @@ class SurveyTreePanel extends JPanel {
 	    
 	    treeModel.reload();
 	    tree.repaint();
-	    expand();
+	    expandAll();
 
 	}
 	
-	private void expand() {
+	private void expandAll() {
 	    for (int i = 0; i < tree.getRowCount(); i++) {
 	    	tree.expandPath(tree.getPathForRow(i));
 	    }		
 	}
 	
-	private void collapse() {
+	private void collapseAll() {
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			tree.collapsePath(tree.getPathForRow(i));
 		}
 	}
 	
 	private void storeCollapseStatus() {
-		collapsedPaths.clear();
+		collapsedObjects.clear();
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			TreePath p = tree.getPathForRow(i);
 			if (tree.isCollapsed(p) == true) {
-				collapsedPaths.add(p);
+				collapsedObjects.add(getPathObject(p));
 			}
 		}
-		storedSelectedPath = getSelectedPath();
+		storedSelectedObject = getPathObject(getSelectedPath());
 	}
 	
 	private void restoreCollapseStatus() {
-		for (TreePath p : collapsedPaths) {
-			tree.collapsePath(p);
-		}
-		if (storedSelectedPath != null) {
-			boolean rowFound = false;
-			for (int i = 0; i < tree.getRowCount(); i++) {
-				if (tree.getPathForRow(i) == storedSelectedPath) {
-					rowFound = true;
+		expandAll();
+		
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			TreePath p = tree.getPathForRow(i);
+			SurveyTreeAbstract o = getPathObject(p);
+			for (SurveyTreeAbstract t : collapsedObjects) {
+				if (t == o) {
+					tree.collapseRow(i);
 					break;
 				}
 			}
-			if (rowFound) {
-				tree.setSelectionPath(storedSelectedPath);
+			if (o == storedSelectedObject) {
+				tree.setSelectionPath(p);
 			}
 		}
+		tree.requestFocus();
 	}
 	
 
 	public TreePath getSelectedPath() {
 		return tree.getSelectionPath();
+	}
+	
+	private SurveyTreeAbstract getPathObject(TreePath path) {
+		if (path == null) {
+			return null;
+		}
+		DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+		SurveyTreeAbstract pathObject = (SurveyTreeAbstract) node.getUserObject();
+		return pathObject;
 	}
 
     /** Remove all nodes except the root node. */
@@ -336,7 +344,6 @@ class SurveyTreePanel extends JPanel {
 	private void setFieldValues(SurveyTreeAbstract t) {
 		if (t != null) {
 			textField.setText(t.getText());
-			sortSpinner.setValue((Integer)t.getSort());
 			minBox.setSelected(t.getMinOwnerScoreRequired());
 			minSpinner.setValue(t.getMinOwnerScore());
 			maxBox.setSelected(t.getMaxOwnerScoreAllowed());
@@ -352,28 +359,7 @@ class SurveyTreePanel extends JPanel {
 		}
 	}
 	
-	public void setDebug(boolean debug) {
-		this.debug = debug;
-		if (debug) {
-			System.out.println("Debugging activated");
-		} else {
-			System.out.println("Debugging deactivated");
-		}
-	}
-	
-	public boolean isDebug() {
-		return debug;
-	}
-	
-	public void toggleDebug() {
-		if (debug) {
-			setDebug(false);
-		} else {
-			setDebug(true);
-		}
-	}
-
-    
+ 
     class SurveyTreeModel extends DefaultTreeModel {
 
 		private static final long serialVersionUID = 1L;
@@ -384,6 +370,9 @@ class SurveyTreePanel extends JPanel {
 		
 		@Override
 		public void valueForPathChanged(TreePath path, Object newValue) {
+        	if (debug) {
+        		System.out.println("valueForPathChanged: " + path.toString());
+        	}
 			String text = newValue.toString();
 			if (text != null) {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
@@ -391,7 +380,8 @@ class SurveyTreePanel extends JPanel {
 				s.setText(text);
 				textField.setText(text);
 			}
-			tree.repaint();
+			//tree.repaint(); TODO hack
+			setSurvey(survey);
 		}
     	
     }
@@ -405,7 +395,6 @@ class SurveyTreePanel extends JPanel {
 				DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
 				SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 				t.setText(textField.getText());
-				t.setSort((int)sortSpinner.getValue());
 				t.setMinOwnerScoreRequired((boolean)minBox.isSelected());
 				t.setMinOwnerScore((int)minSpinner.getValue());
 				t.setMaxOwnerScoreAllowed((boolean)maxBox.isSelected());
@@ -416,7 +405,8 @@ class SurveyTreePanel extends JPanel {
 					a.setScoreIfUnchosen((int)unchosenSpinner.getValue());
 				}
 			
-				tree.repaint();
+				//tree.repaint(); TODO hack
+				setSurvey(survey);
 			}
 			
 		}
@@ -425,13 +415,36 @@ class SurveyTreePanel extends JPanel {
     
     class SurveyTreeSelectionListener implements TreeSelectionListener {
     	
-		public void valueChanged(TreeSelectionEvent e) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
+		private void switchSortButtons(SurveyTreeAbstract userObject) {
+			if (userObject.getClass() == Survey.class) {
+				sortUpButton.setEnabled(false);
+				sortDownButton.setEnabled(false);
+			} else {
+				if (userObject.getSort() > 1) {
+					sortUpButton.setEnabled(true);
+				} else {
+					sortUpButton.setEnabled(false);
+				}
+				if (userObject.getSort() < userObject.getOwner().getMaxSort()) {
+					sortDownButton.setEnabled(true);
+				} else {
+					sortDownButton.setEnabled(false);
+				}
+			}
+		}
+    	
+    	public void valueChanged(TreeSelectionEvent e) {
+			//DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
+    		DefaultMutableTreeNode node = null;
+    		if (getSelectedPath() != null) {
+    			node = (DefaultMutableTreeNode) getSelectedPath().getLastPathComponent();
+    		}
 			if (node == null) {
 				owner.setAddButtonEnabled(false);
 				owner.setRemoveButtonEnabled(false);
 				textField.setEnabled(false);
-				sortSpinner.setEnabled(false);
+				sortUpButton.setEnabled(false);
+				sortDownButton.setEnabled(false);
 				minBox.setEnabled(false);
 				minSpinner.setEnabled(false);
 				maxBox.setEnabled(false);
@@ -443,7 +456,6 @@ class SurveyTreePanel extends JPanel {
 				owner.setAddButtonEnabled(false);
 				owner.setRemoveButtonEnabled(true);
 				textField.setEnabled(true);
-				sortSpinner.setEnabled(true);
 				minBox.setEnabled(true);
 				minSpinner.setEnabled(true);
 				maxBox.setEnabled(true);
@@ -455,7 +467,6 @@ class SurveyTreePanel extends JPanel {
 				owner.setAddButtonEnabled(true);
 				owner.setRemoveButtonEnabled(false);
 				textField.setEnabled(true);
-				sortSpinner.setEnabled(false);
 				minBox.setEnabled(false);
 				minSpinner.setEnabled(false);
 				maxBox.setEnabled(false);
@@ -467,7 +478,6 @@ class SurveyTreePanel extends JPanel {
 				owner.setAddButtonEnabled(true);
 				owner.setRemoveButtonEnabled(true);
 				textField.setEnabled(true);
-				sortSpinner.setEnabled(true);
 				minBox.setEnabled(true);
 				minSpinner.setEnabled(true);
 				maxBox.setEnabled(true);
@@ -479,7 +489,11 @@ class SurveyTreePanel extends JPanel {
 			
 			if (node != null) {
 				SurveyTreeAbstract t = (SurveyTreeAbstract) node.getUserObject();
+				switchSortButtons(t);
 				setFieldValues(t);
+			} else {
+				sortUpButton.setEnabled(false);
+				sortDownButton.setEnabled(false);
 			}
 		}
     	
@@ -490,23 +504,6 @@ class SurveyTreePanel extends JPanel {
         	if (debug) {
         		System.out.println("treeNodesChanged: " + e.getTreePath());
         	}
-         //  SurveyTreeAbstract node;
-         //   node = (SurveyTreeAbstract)(e.getPath().getLastPathComponent());
-         //   e.get
-
-            /*
-             * If the event lists children, then the changed
-             * node is the child of the node we've already
-             * gotten.  Otherwise, the changed node and the
-             * specified node are the same.
-             */
-
-                //int index = e.getChildIndices()[0];
-          //      node = (SurveyTreeAbstract)(node.getChildAt(index));
-
-            
-            //tree.repaint();
-            //System.out.println("New value: " + node.getUserObject());
         }
         
         public void treeNodesInserted(TreeModelEvent e) {
@@ -541,14 +538,14 @@ class SurveyTreePanel extends JPanel {
 
         public SurveyTreeCellRenderer() {
             
-        	surveyIcon = new ImageIcon("survey-icon.png");
-        	questionnaireIcon = new ImageIcon("questionnaire-icon.png");
-            questionIcon = new ImageIcon("question-icon.png");
-            answerIcon = new ImageIcon("answer-icon.png");
+        	surveyIcon = new ImageIcon("Icons/survey-icon.png");
+        	questionnaireIcon = new ImageIcon("Icons/questionnaire-icon.png");
+            questionIcon = new ImageIcon("Icons/question-icon.png");
+            answerIcon = new ImageIcon("Icons/answer-icon.png");
         }
 
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-            super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+        	super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             setToolTipText(null); //no tool tip
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
             SurveyTreeAbstract nodeObject = (SurveyTreeAbstract) (node.getUserObject());
@@ -561,9 +558,56 @@ class SurveyTreePanel extends JPanel {
             } else if (nodeObject.getClass() == Answer.class) {
             	setIcon(answerIcon);
             }
+            // TODO test hintergrundfarbe (für allfällige Simulation)
+            Color bg = new Color(210,60,120);
+            setBackgroundNonSelectionColor(bg);
+            setBackgroundSelectionColor(bg);
             return this;
         }
 
     }
+    
+    class SortUpListener implements ActionListener {
+    	@Override
+    	public void actionPerformed(ActionEvent arg0) {
+			TreePath p = getSelectedPath();
+			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
+			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
+			t.moveSortUp();
+			setSurvey(survey); // TODO hack bzw. besser kapseln
+		}
+    }
+    
+    class SortDownListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			TreePath p = getSelectedPath();
+			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
+			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
+			t.moveSortDown();
+			setSurvey(survey); // TODO hack bzw. besser kapseln
+		}
+    }
+    
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+		if (debug) {
+			System.out.println("Debugging activated");
+		} else {
+			System.out.println("Debugging deactivated");
+		}
+	}
+	
+	public boolean isDebug() {
+		return debug;
+	}
+	
+	public void toggleDebug() {
+		if (debug) {
+			setDebug(false);
+		} else {
+			setDebug(true);
+		}
+	}
 
 }
