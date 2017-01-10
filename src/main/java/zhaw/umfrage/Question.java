@@ -84,5 +84,14 @@ public class Question extends SurveyTreeAbstract {
 
 	public boolean isAnswered() {
 		return answered;
-	}	
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		super.reset();
+		answered = false;
+	}
+	
+	
 }

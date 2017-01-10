@@ -57,8 +57,12 @@ public class Answer extends SurveyTreeAbstract {
 		this.chosen = chosen;
 	}
 
-
-
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		super.reset();
+		chosen = false;
+	}
 
 
 }

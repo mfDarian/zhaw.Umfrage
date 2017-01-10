@@ -559,9 +559,9 @@ class SurveyTreePanel extends JPanel {
             	setIcon(answerIcon);
             }
             // TODO test hintergrundfarbe (für allfällige Simulation)
-            Color bg = new Color(210,60,120);
-            setBackgroundNonSelectionColor(bg);
-            setBackgroundSelectionColor(bg);
+            //Color bg = new Color(210,60,120);
+            //setBackgroundNonSelectionColor(bg);
+            //setBackgroundSelectionColor(bg);
             return this;
         }
 
