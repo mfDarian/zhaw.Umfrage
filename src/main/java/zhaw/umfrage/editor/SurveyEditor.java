@@ -192,7 +192,7 @@ public class SurveyEditor extends JPanel implements ActionListener {
 
         JFrame frame = new JFrame("Survey Editor");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Image img = new ImageIcon("Binary-tree-icon.png").getImage();
+        Image img = new ImageIcon("Icons/Binary-tree-icon.png").getImage();
         frame.setIconImage(img);
         
         Insets s = new Insets(2,10,2,10);
