@@ -574,7 +574,7 @@ class SurveyTreePanel extends JPanel {
 			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
 			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 			t.moveSortUp();
-			setSurvey(survey); // TODO hack
+			setSurvey(survey); // TODO hack bzw. besser kapseln
 		}
     }
     
@@ -585,7 +585,7 @@ class SurveyTreePanel extends JPanel {
 			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
 			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 			t.moveSortDown();
-			setSurvey(survey); // TODO hack
+			setSurvey(survey); // TODO hack bzw. besser kapseln
 		}
     }
     
