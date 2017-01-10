@@ -15,14 +15,14 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	
 	private static final long serialVersionUID = 1L;
 	private String text;
-	private SurveyTreeAbstract owner;
+	protected SurveyTreeAbstract owner;
 	protected ArrayList<SurveyTreeAbstract> itemList;
 	private int sort = 0;
 	private boolean minOwnerScoreRequired;
 	private boolean maxOwnerScoreAllowed;
 	private int minOwnerScore;
 	private int maxOwnerScore;
-	private transient int score = 0;
+	protected transient int score = 0;
 	private transient int actualItem = -1;
 	
 	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
