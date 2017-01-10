@@ -188,7 +188,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 
 	protected void notifyScoreChange(SurveyTreeAbstract item) {
 		int score = this.score + item.getScore();
-		this.score = score;
+		setScore(score);
 	}
 	
 	protected final void setScore(int score) {

@@ -32,7 +32,7 @@ public class Question extends SurveyTreeAbstract {
 	
 	@Override
 	protected void notifyScoreChange(SurveyTreeAbstract item) {
-		score = 0;
+		int score = 0;
 		for (SurveyTreeAbstract t : itemList) {
 			Answer a = (Answer) t;
 			if (a.isChosen()) {
@@ -41,6 +41,7 @@ public class Question extends SurveyTreeAbstract {
 				score += a.getScoreIfUnchosen();
 			}
 		}
+		setScore(score);
 	}
 	
 	public final void setAnswered(boolean answered) throws QuestionAnswerCountException {
