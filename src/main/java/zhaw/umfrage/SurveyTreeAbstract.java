@@ -15,15 +15,15 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	
 	private static final long serialVersionUID = 1L;
 	private String text;
-	private SurveyTreeAbstract owner;
+	protected SurveyTreeAbstract owner;
 	protected ArrayList<SurveyTreeAbstract> itemList;
 	private int sort = 0;
 	private boolean minOwnerScoreRequired;
 	private boolean maxOwnerScoreAllowed;
 	private int minOwnerScore;
 	private int maxOwnerScore;
-	private transient int score = 0;
-	private transient int actualItem = -1;
+	protected transient int score = 0;
+	private transient int actualItem = 0;
 	
 	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
 		this.text = text;
@@ -188,7 +188,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 
 	protected void notifyScoreChange(SurveyTreeAbstract item) {
 		int score = this.score + item.getScore();
-		this.score = score;
+		setScore(score);
 	}
 	
 	protected final void setScore(int score) {
@@ -202,25 +202,29 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return score;
 	}
 	
-	public final SurveyTreeAbstract getNextItem() {
-		SurveyTreeAbstract nextItem = null;
-		int c = actualItem + 1;
-		if (itemList.size() > c) {
-			nextItem = itemList.get(c);
-			if (nextItem.getMinOwnerScoreRequired() || nextItem.getMaxOwnerScoreAllowed()) {
-				while(c < itemList.size()) {
-					if (!nextItem.getMinOwnerScoreRequired() || (nextItem.getMinOwnerScoreRequired() && score >= nextItem.getMinOwnerScore())) {
-						if (!nextItem.getMaxOwnerScoreAllowed() || (nextItem.getMaxOwnerScoreAllowed() && score <= nextItem.getMaxOwnerScore())) {
-							actualItem = c;
-							return nextItem;
-						}
-					}
-					c++;
-					nextItem = itemList.get(c);
-				}
+	public void reset() {
+		actualItem = 0;
+		score = 0;
+		if (itemList != null) {
+			for (SurveyTreeAbstract item : itemList) {
+				item.reset();
 			}
 		}
-		actualItem = -1; // TODO sinnvolles verhalten?
+	}
+	
+	public final SurveyTreeAbstract getNextItem() {
+		SurveyTreeAbstract nextItem = null;
+		while (actualItem < itemList.size()) {
+			nextItem = itemList.get(actualItem);
+			if (!nextItem.getMinOwnerScoreRequired() || (nextItem.getMinOwnerScoreRequired() && score >= nextItem.getMinOwnerScore())) {
+				if (!nextItem.getMaxOwnerScoreAllowed() || (nextItem.getMaxOwnerScoreAllowed() && score <= nextItem.getMaxOwnerScore())) {
+					actualItem++;
+					return nextItem;
+				}
+			}
+			actualItem++;
+		}
+		actualItem = itemList.size();
 		return nextItem;
 	}
 

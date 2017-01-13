@@ -12,6 +12,7 @@ public class Question extends SurveyTreeAbstract {
 	private static final long serialVersionUID = 1L;
 	private int minAnswersToChose = 0;
 	private int maxAnswersToChose = 0;
+	private transient boolean answered;
 	
 	protected Question(Questionnaire owner, String text){
 		super(text, owner);
@@ -28,21 +29,70 @@ public class Question extends SurveyTreeAbstract {
 	public SurveyTreeAbstract insertItem() {
 		return insertItem("New Answer");
 	}
+	
+	@Override
+	protected void notifyScoreChange(SurveyTreeAbstract item) {
+		int score = 0;
+		for (SurveyTreeAbstract t : itemList) {
+			Answer a = (Answer) t;
+			if (a.isChosen()) {
+				score += a.getScoreIfChosen();
+			} else {
+				score += a.getScoreIfUnchosen();
+			}
+		}
+		setScore(score);
+	}
+	
+	public final void setAnswered(boolean answered) throws QuestionAnswerCountException {
+		int answerCount = 0;
+		for (SurveyTreeAbstract t : itemList) {
+			Answer a = (Answer) t;
+			if (a.isChosen()) {
+				answerCount++;
+			}
+		}
+		if ((minAnswersToChose > 0 && answerCount < minAnswersToChose) || (maxAnswersToChose > 0 && answerCount > maxAnswersToChose)) {
+			throw new QuestionAnswerCountException(this);
+		}
+		this.answered = answered;
+	}
+	
 
-	public int getMinAnswersToChose() {
+	public final int getMinAnswersToChose() {
 		return minAnswersToChose;
 	}
 
-	public void setMinAnswersToChose(int minAnswersToChose) {
-		this.minAnswersToChose = minAnswersToChose;
-	}
-
-	public int getMaxAnswersToChose() {
+	public final int getMaxAnswersToChose() {
 		return maxAnswersToChose;
 	}
 
-	public void setMaxAnswersToChose(int maxAnswersToChose) {
+	public final void setMinAnswersToChose(int minAnswersToChose) {
+		this.minAnswersToChose = minAnswersToChose;
+		// auto-set maxAnsweresToChose if not 0 and below mew minimum
+		if (maxAnswersToChose != 0 && maxAnswersToChose < this.minAnswersToChose) {
+			setMaxAnswersToChose(this.minAnswersToChose);
+		}
+	}
+
+	public final void setMaxAnswersToChose(int maxAnswersToChose) {
 		this.maxAnswersToChose = maxAnswersToChose;
 	}
+	
+	public final boolean isSingleSelect() {
+		return (maxAnswersToChose == 1);
+	}
+
+	public boolean isAnswered() {
+		return answered;
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		super.reset();
+		answered = false;
+	}
+	
 	
 }
