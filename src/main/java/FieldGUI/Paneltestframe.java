@@ -25,10 +25,7 @@ import javax.swing.BoxLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.SwingConstants;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.FormSpecs;
+
 import javax.swing.JTextArea;
 import java.awt.ComponentOrientation;
 import java.awt.TextArea;
@@ -39,7 +36,7 @@ import javax.swing.JMenuItem;
 public class Paneltestframe extends JFrame {
 
 	private JPanel contentPane;
-
+	private JFrame contentFrame; // Variable content Frame nachträglich eingefügt.
 	/**
 	 * Launch the application.
 	 */
@@ -60,8 +57,11 @@ public class Paneltestframe extends JFrame {
 	 * Create the frame.
 	 */
 	public Paneltestframe() {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		contentFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 365, 292);
+		contentFrame = new JFrame(); // neueZeile, Versuche Menü-in Pane Problem zu lösen
+		contentFrame.setVisible(true); // auch neu
+		contentFrame.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);//auch neu
 		contentPane = new JPanel();
 		contentPane.setInheritsPopupMenu(true);
 		contentPane.setIgnoreRepaint(true);
@@ -72,37 +72,61 @@ public class Paneltestframe extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(new GridLayout(0, 1, 0, 0));
-		
+		contentFrame.add(contentPane);				// neue Zeile Versuche Menü-Pane-Probem zu lösen.
 		JMenuBar menuBar_1 = new JMenuBar();
-		contentPane.add(menuBar_1);
+		//contentPane.add(menuBar_1);
 		
+		//JMenu mnNewMenu = new JMenu("New menu");
+		//menuBar_1.add(mnNewMenu);
+		
+		//JMenuItem mntmNewMenuItem = new JMenuItem("New menu item");
+		//mnNewMenu.add(mntmNewMenuItem);
+		
+		//JMenuItem mntmNewMenuItem_1 = new JMenuItem("New menu item");
+		//mnNewMenu.add(mntmNewMenuItem_1);
+		
+		//JMenu mnNewMenuii = new JMenu("New menuII");
+		//menuBar_1.add(mnNewMenuii);
+		
+		//JMenuItem mntmNewMenuItem_3 = new JMenuItem("New menu item");
+		//mnNewMenuii.add(mntmNewMenuItem_3);
+		
+		//JMenuItem mntmNewMenuItem_2 = new JMenuItem("New menu item");
+		//mnNewMenuii.add(mntmNewMenuItem_2);
+		
+		contentFrame.add(menuBar_1);
 		JMenu mnNewMenu = new JMenu("New menu");
-		menuBar_1.add(mnNewMenu);
+				menuBar_1.add(mnNewMenu);
+				
+				JMenuItem mntmNewMenuItem = new JMenuItem("New menu item");
+				mnNewMenu.add(mntmNewMenuItem);
+				
+				JMenuItem mntmNewMenuItem_1 = new JMenuItem("New menu item");
+				mnNewMenu.add(mntmNewMenuItem_1);
+				
+				JMenu mnNewMenuii = new JMenu("New menuII");
+				menuBar_1.add(mnNewMenuii);
+				
+				JMenuItem mntmNewMenuItem_3 = new JMenuItem("New menu item");
+				mnNewMenuii.add(mntmNewMenuItem_3);
+				
+				JMenuItem mntmNewMenuItem_2 = new JMenuItem("New menu item");
+				mnNewMenuii.add(mntmNewMenuItem_2);
+				
 		
-		JMenuItem mntmNewMenuItem = new JMenuItem("New menu item");
-		mnNewMenu.add(mntmNewMenuItem);
 		
-		JMenuItem mntmNewMenuItem_1 = new JMenuItem("New menu item");
-		mnNewMenu.add(mntmNewMenuItem_1);
 		
-		JMenu mnNewMenuii = new JMenu("New menuII");
-		menuBar_1.add(mnNewMenuii);
 		
-		JMenuItem mntmNewMenuItem_3 = new JMenuItem("New menu item");
-		mnNewMenuii.add(mntmNewMenuItem_3);
-		
-		JMenuItem mntmNewMenuItem_2 = new JMenuItem("New menu item");
-		mnNewMenuii.add(mntmNewMenuItem_2);
 		
 		JPanel panel_1 = new JPanel();
 		contentPane.add(panel_1);
 		panel_1.setLayout(new GridLayout(0, 1, 0, 0));
 		
 		
+		
 		JTextPane txtpnDasIstDie = new JTextPane();
 		txtpnDasIstDie.setText("\"Frage 1 /Das ist die erste Frage dieses Surveys. Ich möchte auch herausfinden, ob mit dieser Component Zeilenumbrüche möglich sind. Das scheint der Fall zu sein, und ich bin zufrieden;-)\"");
 		panel_1.add(txtpnDasIstDie);
-		
 		JPanel panel = new JPanel();
 		contentPane.add(panel);
 		panel.setLayout(new GridLayout(0, 2, 0, 0));
