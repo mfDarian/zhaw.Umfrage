@@ -111,7 +111,7 @@ public class Fframe extends JFrame {
 		//15.01.Frage Swen:braucht es eine "Intelligenz, welche definiert wieviele Antwort-Buttons je Frage im GUI angezeigt werden sollen?. Soll diese Intelligenz im GUI abgelegt werden oder anderswo (wo?)
 		
 		//15.01. Bemerkung Swen: Möglicher Mecano für Action Listener: Pro Bearbeitungsschritt der jeweiligen Frage:
-		//Pro Klick des Buttons Action Listeners werden diese Frage-Buttons irgendwie jeweils individuell als boolean "true" gestellt. / per Klicken des submit-Buttons ( eine eigene Methode sollSubmitten();)
+		//Pro Klick des Buttons Action Listeners werden die ausgewählten Frage-Buttons jeweils individuell als boolean "true" gestellt (siehe Kommentar bei Interview, Variante B)Ko  oder deren Antwort ID ermittelt (siehe Kommentar bei Interview, Variante A). in die Interview-Sammlung übergeben / per Klicken des submit-Buttons ( eine eigene Methode sollSubmitten();)
 		//geschieht eine Abschrift der Boolean-Bestände einer Frage in eine Antworte-Sammlung der Interview-Klasse.
 		// Diese Methode sollSubmitten() überprüft auch die Maximal zulässige Anzahl antworten, und "motzt" wenn diese überschritten wird. / Schaue ob in den Frage-Objekten irgendwo eine Instanzvariable für die Maximal zulässige Anzahl von Antworten existiert..
 		JPanel panel_2 = new JPanel();
