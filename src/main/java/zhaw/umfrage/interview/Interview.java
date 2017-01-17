@@ -20,7 +20,7 @@ public class Interview {
 	transient Survey survey;
 	private String interviewer;
 	private String interviewee;
-	protected ArrayList<Answer> collectanswer; // 16.01 Swen: Ich denke, man muss versuchen eine Sammlung der beantworteten Fragen (Array-List(?)) anzulegen. 
+	protected ArrayList<InterviewAnswer> collectanswer; // 16.01 Swen: Ich denke, man muss versuchen eine Sammlung der beantworteten Fragen (Array-List(?)) anzulegen. 
 	
 	
 	//Ein Aspekt, bei dem ich noch nicht ganz sicher bin, ist die Art, wie die Objekte der beantworteten Fragen in dieser Sammlung repräsentiert werden sollen. 

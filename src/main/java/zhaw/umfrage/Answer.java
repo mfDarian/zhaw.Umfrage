@@ -3,6 +3,9 @@
  */
 package zhaw.umfrage;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * @author Darian
  *
@@ -13,6 +16,7 @@ public class Answer extends SurveyTreeAbstract {
 	private int scoreIfChosen = 0;
 	private int scoreIfUnchosen = 0;
 	private transient boolean chosen;
+    
 	
 	public Answer(Question owner, String text) {
 		super(text, owner);
@@ -63,6 +67,6 @@ public class Answer extends SurveyTreeAbstract {
 		super.reset();
 		chosen = false;
 	}
-
+ 
 
 }

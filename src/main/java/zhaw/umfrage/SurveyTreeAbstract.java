@@ -5,6 +5,7 @@ package zhaw.umfrage;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicLong;
 import java.io.Serializable;
 
 /**
@@ -24,7 +25,11 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	private int maxOwnerScore;
 	protected transient int score = 0;
 	private transient int actualItem = 0;
+	private long idCounter = 0; // 17.01 Swen: Hier Versuche ich eine Zähler-Variable zu installieren. Muss das "static" sein? ich glauben nicht in diesem Fall.
+
 	
+	
+
 	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
 		this.text = text;
 		this.itemList = new ArrayList<SurveyTreeAbstract>();
@@ -32,6 +37,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 			this.owner = owner;
 			sort = owner.getMaxSort() + 1;
 		}
+		idCounter= idCounter ++; //17.01 Swen hoffe das funktioniert als allgemeiner ID-Counter...
 	}
 	
 	protected final void addItem(SurveyTreeAbstract item) {
@@ -227,5 +233,15 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		actualItem = itemList.size();
 		return nextItem;
 	}
-
+	
+	public long getIdCounter() { // 17.01. Swen neu angelegt für ID counter
+		return idCounter;
+	}
+	
+	
+	
+	
+	
+	
+	
 }
