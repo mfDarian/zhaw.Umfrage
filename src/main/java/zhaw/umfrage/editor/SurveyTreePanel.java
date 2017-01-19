@@ -1,4 +1,4 @@
-package zhaw.umfrage.editor;
+ackage zhaw.umfrage.editor;
 
 import java.util.ArrayList;
 import java.awt.Color;

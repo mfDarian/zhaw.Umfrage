@@ -6,6 +6,9 @@ package zhaw.umfrage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.swing.JList;
+
 import java.io.Serializable;
 
 /**
@@ -25,8 +28,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	private int maxOwnerScore;
 	protected transient int score = 0;
 	private transient int actualItem = 0;
-	private long idCounter = 0; // 17.01 Swen: Hier Versuche ich eine Zähler-Variable zu installieren. Muss das "static" sein? ich glauben nicht in diesem Fall.
-
+	private long idCounter = 0; // 17.01 Swen: hier Versuche ich eine Zähler-Variable zu installieren. Muss das "static" sein? ich glauben nicht in diesem Fall.
+	private int size = 0; // 19.01 Swen: Diese Variable soll die Anzahl der Objekte einer Sammlung zeigen.
 	
 	
 
@@ -239,9 +242,34 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 	
 	
+	 //Swen19.01: Diese Methode lege ich für Interview.proceedInterview()  an. ( nachhttp://stackoverflow.com/questions/29798512/displaying-and-manipulating-arraylist-in-java-swing-gui)  GUI braucht Question eine Methode, welche die Fragen ausliest;
+	//public void questiongiveAnswers() {
+	//	
+	//	 JList<String> currentanswers = new JList<>(itemList.toArray(new String[0]));
+	//}
+			
+			
+		
+		
+		
 	
+			
+	//public void ArrayList<SurveyTreeAbstract> itemList giveSize(); {  // 19.01.;-(( Ich möchte einen integer kriegen, den ich in eineInstanzvariable schreibe, auf welche ich vom GUI her zugreifen kann (moment, brauche ich das wirklich? zählen könnte ich auch mit der Schleife von giveitems()? 
+		 
+		//int size = itemList.size();
+		  
+		//System.out.println(size);
+		
+	 //}
+		//int item = item.getsize();	
+			
+			
+			
+			
+			
+			
 	
-	
+	}
 	
 	
 }

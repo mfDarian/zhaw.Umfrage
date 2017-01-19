@@ -3,6 +3,8 @@
  */
 package zhaw.umfrage;
 
+import javax.swing.JList;
+
 /**
  * @author Darian
  *
@@ -13,6 +15,7 @@ public class Question extends SurveyTreeAbstract {
 	private int minAnswersToChose = 0;
 	private int maxAnswersToChose = 0;
 	private transient boolean answered;
+	private int countanswers;
 	
 	protected Question(Questionnaire owner, String text){
 		super(text, owner);
@@ -30,6 +33,11 @@ public class Question extends SurveyTreeAbstract {
 		return insertItem("New Answer");
 	}
 	
+	
+	
+	
+	
+	
 	@Override
 	protected void notifyScoreChange(SurveyTreeAbstract item) {
 		int score = 0;
@@ -44,12 +52,13 @@ public class Question extends SurveyTreeAbstract {
 		setScore(score);
 	}
 	
-	public final void setAnswered(boolean answered) throws QuestionAnswerCountException {
+	public final void setAnswered(boolean answered) throws QuestionAnswerCountException { //Swen 18.01 Auf diese Methode muss ich im Interview zugreifen können)
 		int answerCount = 0;
 		for (SurveyTreeAbstract t : itemList) {
 			Answer a = (Answer) t;
 			if (a.isChosen()) {
-				answerCount++;
+				answerCount++; //19.01 Swen: Ich meine, dieser answer-Count sollte in eineInstanz-Variable geschrieben werden, (inkl einer get();-Methode, welche die InterviewKlasse in ihrer proceedInterview();-Funktion abrufen kann.
+			countanswers = answerCount;
 			}
 		}
 		if ((minAnswersToChose > 0 && answerCount < minAnswersToChose) || (maxAnswersToChose > 0 && answerCount > maxAnswersToChose)) {
@@ -58,6 +67,10 @@ public class Question extends SurveyTreeAbstract {
 		this.answered = answered;
 	}
 	
+
+	public int getCountanswers() {
+		return countanswers;
+	}
 
 	public final int getMinAnswersToChose() {
 		return minAnswersToChose;
@@ -93,6 +106,18 @@ public class Question extends SurveyTreeAbstract {
 		super.reset();
 		answered = false;
 	}
+	
+	 
+	public void questiongiveAnswers() { // 19.01: Schreibt alle Antworten, welche zu einer Frage gehört in einen STring-Array.
+		
+		 JList<String> currentanswers = new JList<>(itemList.toArray(new String[0]));
+	}
+	
+	
+	
+	
+	
+	
 	
 	
 }

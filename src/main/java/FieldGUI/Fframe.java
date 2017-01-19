@@ -88,7 +88,7 @@ public class Fframe extends JFrame {
 		panel.setLayout(null);
 		
 		JTextPane txtpnfragedas = new JTextPane();
-		txtpnfragedas.setText("\"\\\"Frage 1 /Das ist die erste Frage dieses Surveys. Ich möchte auch herausfinden, ob mit dieser Component Zeilenumbrüche möglich sind. Das scheint der Fall zu sein, und ich bin zufrieden;-)\\\"\")");
+		txtpnfragedas.setText(t.getCurrentq()); //  //18.1. eclipse motzt;" "t" cannot be resolved"....aber zur Laufzeit ist  das interview- Objekt "t" dann ja da(?)
 		txtpnfragedas.setBounds(0, 0, 434, 77);
 		panel.add(txtpnfragedas);
 		
@@ -96,6 +96,8 @@ public class Fframe extends JFrame {
 		panel_1.setBounds(0, 77, 420, 84);
 		contentPane.add(panel_1);
 		panel_1.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		
+		//19.01. Ich kriege eine Array-List aus
 		
 		JRadioButton rdbtnNewRadioButton_2 = new JRadioButton("Antwort 1");
 		panel_1.add(rdbtnNewRadioButton_2);
@@ -124,7 +126,7 @@ public class Fframe extends JFrame {
 		panel_2.add(btnEingabe);
 		
 		txtAnzahlDerAntworten = new JTextField();
-		txtAnzahlDerAntworten.setText("Anzahl der Antworten welche Maximal eingegeben werden können:");
+		txtAnzahlDerAntworten.setText(t.getCurrentq()); //18.1. Hier muss ich 
 		txtAnzahlDerAntworten.setBounds(0, 0, 402, 22);
 		panel_2.add(txtAnzahlDerAntworten);
 		txtAnzahlDerAntworten.setColumns(10);
