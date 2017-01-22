@@ -48,4 +48,13 @@ public class QuestionAnswerCountException extends Exception {
 		return exceptionText;
 	}
 
+	public final int getMinAnswers() {
+		return minAnswers;
+	}
+
+	public final int getMaxAnswers() {
+		return maxAnswers;
+	}
+
+	
 }

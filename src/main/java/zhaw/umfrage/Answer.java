@@ -9,13 +9,16 @@ package zhaw.umfrage;
  */
 public class Answer extends SurveyTreeAbstract {
 	
+	//TODO: Wenn die Frage schon beantwortet ist, muss das chose und unchose eine Exception werfen!
+	
 	private static final long serialVersionUID = 1L;
+	private int id;
 	private int scoreIfChosen = 0;
-	private int scoreIfUnchosen = 0;
 	private transient boolean chosen;
 	
-	public Answer(Question owner, String text) {
+	public Answer(Question owner, String text, int id) {
 		super(text, owner);
+		this.id = id;
 	}
 	
 	@Override
@@ -34,14 +37,7 @@ public class Answer extends SurveyTreeAbstract {
 
 	public final void setScoreIfChosen(int scoreIfChosen) {
 		this.scoreIfChosen = scoreIfChosen;
-	}
-
-	public final int getScoreIfUnchosen() {
-		return scoreIfUnchosen;
-	}
-
-	public final void setScoreIfUnchosen(int scoreIfUnchosen) {
-		this.scoreIfUnchosen = scoreIfUnchosen;
+		expose();
 	}
 
 	public final boolean isChosen() {
@@ -53,16 +49,38 @@ public class Answer extends SurveyTreeAbstract {
 		if (chosen) {
 			setScore(scoreIfChosen);
 		} else {
-			setScore(scoreIfUnchosen);
+			setScore(0);
 		}
 	}
 
 	@Override
 	public void reset() {
-		// TODO Auto-generated method stub
 		super.reset();
 		chosen = false;
 	}
+	
+	/*
+	@Override
+	public boolean isReachable() {
+		return owner.isReachable();
+	}
+	*/
+	
+
+	@Override
+	protected void calcMinScoreAchieveable() {
+		minScoreAchieveable = Math.min(scoreIfChosen, 0);
+	}
+
+	@Override
+	protected void calcMaxScoreAchieveable() {
+		maxScoreAchieveable = Math.max(scoreIfChosen, 0);
+	}
 
 
+	public final int getId() {
+		return id;
+	}
+
+	
 }

@@ -13,9 +13,11 @@ import java.util.ArrayList;
 public class Survey extends SurveyTreeAbstract{
 	
 	private static final long serialVersionUID = 1L;
+	private int questionIdCounter;
 	
 	public Survey(String text) {
 		super(text, null);
+		questionIdCounter = 0;
 	}
 	
 	@Override
@@ -31,8 +33,10 @@ public class Survey extends SurveyTreeAbstract{
 		return insertItem("New Questionnaire");
 	}
 	
+
 	public void clear() {
 		itemList = new ArrayList<>();
+		expose();
 	}
 	
 	// Temporär hier
@@ -74,7 +78,16 @@ public class Survey extends SurveyTreeAbstract{
 	}
 
 
+	protected int nextQuestionId() {
+		return ++questionIdCounter;
+	}
 
+	@Override
+	public boolean isReachable() {
+		return true;
+	}
+	
+	
 
 	
 }

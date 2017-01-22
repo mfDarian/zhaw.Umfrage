@@ -17,7 +17,8 @@ public class Questionnaire extends SurveyTreeAbstract {
 
 	@Override
 	public SurveyTreeAbstract insertItem(String text) {
-		Question q = new Question(this, text);
+		Survey o = (Survey) owner;
+		Question q = new Question(this, text, o.nextQuestionId());
 		super.addItem(q);
 		return q;
 	}
@@ -26,7 +27,18 @@ public class Questionnaire extends SurveyTreeAbstract {
 	public SurveyTreeAbstract insertItem() {
 		return insertItem("New Question");
 	}
+
+	@Override
+	public boolean isReachable() {
+		// questionnaires containing answered questions must stay reachable
+		for (SurveyTreeAbstract i : itemList) {
+			Question q = (Question) i;
+			if (q.isAnswered()) {
+				return true;
+			}
+		}
+		return super.isReachable();
+	}
 	
-
-
+	
 }

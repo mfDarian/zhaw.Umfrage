@@ -3,23 +3,27 @@
  */
 package zhaw.umfrage.interview;
 
-import zhaw.umfrage.Survey;
+import java.io.Serializable;
 
+import zhaw.umfrage.*;
 
 /**
  * @author Darian
  *
  */
-public class Interview {
+public class Interview implements Serializable {
 	
-	transient Survey survey;
+	private static final long serialVersionUID = 1L;
+	transient private Survey survey;
 	private String interviewer;
 	private String interviewee;
+	private boolean frozen;
+
 	
-	
-	
-	public Interview(Survey survey) {
+	public Interview(Survey survey, String interviewer, String interviewee) {
 		this.survey = survey;
+		this.interviewer = interviewer;
+		this.interviewee = interviewee;
 	}
 	
 	public Survey getSurvey() {
@@ -42,6 +46,16 @@ public class Interview {
 		return interviewee;
 	}
 	
+	public void freeze() {
+		System.out.println("Interview eingefroren");
+		frozen = true;
+	}
 	
-
+	public boolean isFrozen() {
+		return frozen;
+	}
+	
+	public void printAll() {
+		survey.printChain();
+	}
 }

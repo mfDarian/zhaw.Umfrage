@@ -22,9 +22,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.tree.TreePath;
+
+import javax.swing.*;
 import zhaw.umfrage.*;
 
-// Test Dani
 
 public class SurveyEditor extends JPanel implements ActionListener {
 
@@ -38,6 +39,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
 	static String SAVE_COMMAND = "save";
     static String SAVE_AS_COMMAND = "save_as";
     static String DEBUG_COMMAND = "toggle_debug";
+    static String SHOW_SCORE_COMMAND = "show_score";
+    static String SHOW_MINMAX_SCORE_COMMAND = "show_minmax_score";
 	
 	private static String ADD_COMMAND = "add";
     private JButton addButton;
@@ -127,6 +130,10 @@ public class SurveyEditor extends JPanel implements ActionListener {
             treePanel.clear();
         } else if (DEBUG_COMMAND.equals(command)) {
         	treePanel.toggleDebug();
+        } else if (SHOW_SCORE_COMMAND.equals(command)) {
+        	treePanel.toggleShowScore();
+        } else if (SHOW_MINMAX_SCORE_COMMAND.equals(command)) {
+        	treePanel.toggleShowMinMaxScore();
         } else if (NEW_COMMAND.equals(command)) {
         	actualFile = null;
         	treePanel.setNewSurvey();
@@ -213,17 +220,30 @@ public class SurveyEditor extends JPanel implements ActionListener {
         JMenuItem menuSaveAs = new JMenuItem("Save as...");
         menuSaveAs.setActionCommand(SAVE_AS_COMMAND);
         menuSaveAs.setMargin(s2);
-        
-        JMenuItem menuDebug = new JMenuItem("Toggle Debug");
+        JMenuItem menuFileSep1 = new JMenuItem("-");
+        JCheckBoxMenuItem menuDebug = new JCheckBoxMenuItem("Debug");
+        menuDebug.setSelected(false);
         menuDebug.setActionCommand(DEBUG_COMMAND);
         menuDebug.setMargin(s2);
+        
+        JMenu menuShow = new JMenu("Show");
+        JCheckBoxMenuItem showScore = new JCheckBoxMenuItem("Score");
+        showScore.setSelected(false);
+        showScore.setActionCommand(SHOW_SCORE_COMMAND);
+        JCheckBoxMenuItem showMinMaxScore = new JCheckBoxMenuItem("Min/Max Score");
+        showMinMaxScore.setSelected(false);
+        showMinMaxScore.setActionCommand(SHOW_MINMAX_SCORE_COMMAND);
 
         menuFile.add(menuNew);
 		menuFile.add(menuOpen);
 		menuFile.add(menuSave);
 		menuFile.add(menuSaveAs);
+		menuFile.add(menuFileSep1);
 		menuFile.add(menuDebug);
 		menuBar.add(menuFile);
+		menuShow.add(showScore);
+		menuShow.add(showMinMaxScore);
+		menuBar.add(menuShow);
 		
 		frame.setJMenuBar(menuBar);
 
@@ -238,6 +258,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
         menuSave.addActionListener(newContentPane);
         menuSaveAs.addActionListener(newContentPane);
         menuDebug.addActionListener(newContentPane);
+        showScore.addActionListener(newContentPane);
+        showMinMaxScore.addActionListener(newContentPane);
 
         //Display the window.
         frame.setMinimumSize(new Dimension(1000, 1000));

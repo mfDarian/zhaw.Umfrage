@@ -15,7 +15,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -40,19 +42,21 @@ class SurveyTreePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private SurveyEditor owner;
 	private Survey survey;
-	private DefaultMutableTreeNode root;
+	private SurveyTreeNode root;
 	private DefaultTreeModel treeModel;
 	private JTree tree;
 	private ArrayList<SurveyTreeAbstract> collapsedObjects = new ArrayList<>();
 	private SurveyTreeAbstract storedSelectedObject;
 	private Toolkit toolkit = Toolkit.getDefaultToolkit();
-	private boolean debug;
+	private boolean debug, showScore, showMinMaxScore;
 	
-	private JLabel textLabel, minLabel, maxLabel, chosenLabel, unchosenLabel;
-	private JSpinner minSpinner, maxSpinner, chosenSpinner, unchosenSpinner;
-	private JCheckBox minBox, maxBox;
+	private JLabel textLabel, minLabel, maxLabel, minAnswerLabel, maxAnswerLabel, chosenLabel;
+	private JSpinner minSpinner, maxSpinner, minAnswerSpinner, maxAnswerSpinner, chosenSpinner;
+	private JCheckBox minBox, maxBox, setBox, answeredBox;
 	private JTextField textField;
 	private JButton sortUpButton, sortDownButton, saveButton;
+	
+	private JPopupMenu popUp;
 	
 	protected SurveyTreePanel(SurveyEditor owner, Survey survey) {
 		super(new GridLayout(1,2));
@@ -63,7 +67,7 @@ class SurveyTreePanel extends JPanel {
 		} else {
 			this.survey = survey;
 		}
-		root = new DefaultMutableTreeNode(this.survey);
+		root = new SurveyTreeNode(this.survey);
 		treeModel = new SurveyTreeModel(root);
 		treeModel.addTreeModelListener(new SurveyTreeModelListener());
 		tree = new JTree(treeModel);
@@ -74,6 +78,12 @@ class SurveyTreePanel extends JPanel {
 		tree.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		tree.setCellRenderer(new SurveyTreeCellRenderer());
 		tree.addTreeSelectionListener(new SurveyTreeSelectionListener());
+		popUp = new JPopupMenu("CTX");
+		JMenuItem p1 = new JMenuItem("Hallo");
+		JMenuItem p2 = new JMenuItem("Adie");
+		popUp.add(p1);
+		popUp.add(p2);
+		tree.setComponentPopupMenu(popUp);
 		JScrollPane scrollPane = new JScrollPane(tree);
 		
 		add(scrollPane);
@@ -159,38 +169,65 @@ class SurveyTreePanel extends JPanel {
         gbc.gridy = 7;
         gbc.gridwidth = 2;
         detailPanel.add(maxSpinner, gbc);
+        
+        minAnswerLabel = new JLabel("Min Anwers");
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.gridwidth = 2;
+        detailPanel.add(minAnswerLabel, gbc);
+        
+        minAnswerSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
+        minAnswerSpinner.setEnabled(false);
+        gbc.gridx = 2;
+        gbc.gridy = 8;
+        gbc.gridwidth = 1;
+        detailPanel.add(minAnswerSpinner, gbc);
+        
+        maxAnswerLabel = new JLabel("Max Answers");
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        detailPanel.add(maxAnswerLabel, gbc);
+        
+        maxAnswerSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
+        maxAnswerSpinner.setEnabled(false);
+        gbc.gridx = 2;
+        gbc.gridy = 9;
+        gbc.gridwidth = 1;
+        detailPanel.add(maxAnswerSpinner, gbc);
 
         chosenLabel = new JLabel("Score if chosen");
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         gbc.gridwidth = 2;
         detailPanel.add(chosenLabel, gbc);
         
-        chosenSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
+        chosenSpinner = new JSpinner(new SpinnerNumberModel(0,Integer.MIN_VALUE,null,1));
         chosenSpinner.setEnabled(false);
         gbc.gridx = 2;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
         detailPanel.add(chosenSpinner, gbc);
         
-        unchosenLabel = new JLabel("Score if unchosen");
+        answeredBox = new JCheckBox("Answered");
+        answeredBox.setEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 9;
-        gbc.gridwidth = 2;
-        detailPanel.add(unchosenLabel, gbc);
-        
-        unchosenSpinner = new JSpinner(new SpinnerNumberModel(0,0,null,1));
-        unchosenSpinner.setEnabled(false);
-        gbc.gridx = 2;
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         gbc.gridwidth = 1;
-        detailPanel.add(unchosenSpinner, gbc);
+        detailPanel.add(answeredBox, gbc);
+        
+        setBox = new JCheckBox("Chosen");
+        setBox.setEnabled(false);
+        gbc.gridx = 1;
+        gbc.gridy = 11;
+        gbc.gridwidth = 1;
+        detailPanel.add(setBox, gbc);
         
         saveButton = new JButton("Save details");
         saveButton.addActionListener(new DetailChangeListener());
         saveButton.setEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 12;
         gbc.gridwidth = 3;
         detailPanel.add(saveButton, gbc);
         
@@ -218,20 +255,20 @@ class SurveyTreePanel extends JPanel {
 	
 
 	private void drawTree() {
-		DefaultMutableTreeNode questionnaireNode = null;
-	    DefaultMutableTreeNode questionNode = null;
-	    DefaultMutableTreeNode answerNode = null;
+		SurveyTreeNode questionnaireNode = null;
+	    SurveyTreeNode questionNode = null;
+	    SurveyTreeNode answerNode = null;
 	    
 	    for (SurveyTreeAbstract questionnaire : survey.getItemList()) {
-	    	questionnaireNode = new DefaultMutableTreeNode(questionnaire);
+	    	questionnaireNode = new SurveyTreeNode(questionnaire);
 	    	treeModel.insertNodeInto(questionnaireNode, root, root.getChildCount());
 	    	
 	    	for (SurveyTreeAbstract question : questionnaire.getItemList()) {
-	    		questionNode = new DefaultMutableTreeNode(question);
+	    		questionNode = new SurveyTreeNode(question);
 	    		treeModel.insertNodeInto(questionNode, questionnaireNode, questionnaireNode.getChildCount());
 
 	    		for (SurveyTreeAbstract answer : question.getItemList()) {
-	    			answerNode = new DefaultMutableTreeNode(answer);
+	    			answerNode = new SurveyTreeNode(answer);
 	    			answerNode.setAllowsChildren(false);
 	    			treeModel.insertNodeInto(answerNode, questionNode, questionNode.getChildCount());
 	    		}
@@ -295,7 +332,7 @@ class SurveyTreePanel extends JPanel {
 		if (path == null) {
 			return null;
 		}
-		DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+		SurveyTreeNode node = (SurveyTreeNode) path.getLastPathComponent();
 		SurveyTreeAbstract pathObject = (SurveyTreeAbstract) node.getUserObject();
 		return pathObject;
 	}
@@ -313,11 +350,11 @@ class SurveyTreePanel extends JPanel {
     }
     
     public void addObject(TreePath parentPath) {
-    	DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) parentPath.getLastPathComponent();
+    	SurveyTreeNode parentNode = (SurveyTreeNode) parentPath.getLastPathComponent();
 		SurveyTreeAbstract parent = (SurveyTreeAbstract) parentNode.getUserObject();
 		SurveyTreeAbstract child = parent.insertItem();
 		if (child != null) {
-			DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child);
+			SurveyTreeNode childNode = new SurveyTreeNode(child);
 			treeModel.insertNodeInto(childNode, parentNode, parentNode.getChildCount());
 			tree.scrollPathToVisible(new TreePath(childNode.getPath()));
 		}
@@ -325,8 +362,8 @@ class SurveyTreePanel extends JPanel {
     
     public void removeObject(TreePath path) {
         if (path != null) {
-        	DefaultMutableTreeNode  currentNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-        	DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) currentNode.getParent();
+        	SurveyTreeNode  currentNode = (SurveyTreeNode) path.getLastPathComponent();
+        	SurveyTreeNode parentNode = (SurveyTreeNode) currentNode.getParent();
         	MutableTreeNode parent = (MutableTreeNode) parentNode;
         	SurveyTreeAbstract currentObject = (SurveyTreeAbstract) currentNode.getUserObject();
         	SurveyTreeAbstract parentObject = (SurveyTreeAbstract) parentNode.getUserObject();
@@ -350,17 +387,60 @@ class SurveyTreePanel extends JPanel {
 			maxSpinner.setValue(t.getMaxOwnerScore());
 			if (t.getClass() == Answer.class) {
 				Answer a = (Answer)t;
+				minAnswerSpinner.setValue((Integer)0);
+				maxAnswerSpinner.setValue((Integer)0);
 				chosenSpinner.setValue((Integer)a.getScoreIfChosen());
-				unchosenSpinner.setValue((Integer)a.getScoreIfUnchosen());
-			} else {
+				setBox.setSelected((boolean)a.isChosen());
+				answeredBox.setSelected(false);
+			} else if (t.getClass() == Question.class) {
+				Question q = (Question) t;
+				minAnswerSpinner.setValue(q.getMinAnswersToChose());
+				maxAnswerSpinner.setValue(q.getMaxAnswersToChose());
 				chosenSpinner.setValue((Integer)0);
-				unchosenSpinner.setValue((Integer)0);
+				setBox.setSelected(false);
+				answeredBox.setSelected((boolean)q.isAnswered());
+			} else {
+				minAnswerSpinner.setValue((Integer)0);
+				maxAnswerSpinner.setValue((Integer)0);
+				chosenSpinner.setValue((Integer)0);
+				setBox.setSelected(false);
+				answeredBox.setSelected(false);
 			}
 		}
 	}
 	
- 
-    class SurveyTreeModel extends DefaultTreeModel {
+
+	private class SurveyTreeNode extends DefaultMutableTreeNode {
+
+		private static final long serialVersionUID = 1L;
+		
+		public SurveyTreeNode(Object userObject) {
+			super(userObject);
+		}
+
+		@Override
+		public String toString() {
+			String s;
+			if (userObject == null) {
+				s = "empty Node";
+			} else {
+				SurveyTreeAbstract t = (SurveyTreeAbstract) userObject;
+				s = t.toString();
+				if (showScore && showMinMaxScore) {
+					s += " [" + t.getMinScoreAchieveable() + " <= " + t.getScore() + " <= " + t.getMaxScoreAchieveable() + "]";
+				} else if (showScore) {
+					s += " [" + t.getScore() + "]";
+				} else if (showMinMaxScore) {
+					s += " [" + t.getMinScoreAchieveable() + " / " + t.getMaxScoreAchieveable() + "]";
+				}
+			}
+			return s;
+		}
+
+	}
+
+	
+	private class SurveyTreeModel extends DefaultTreeModel {
 
 		private static final long serialVersionUID = 1L;
 
@@ -375,7 +455,7 @@ class SurveyTreePanel extends JPanel {
         	}
 			String text = newValue.toString();
 			if (text != null) {
-				DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+				SurveyTreeNode node = (SurveyTreeNode) path.getLastPathComponent();
 				SurveyTreeAbstract s = (SurveyTreeAbstract) node.getUserObject();
 				s.setText(text);
 				textField.setText(text);
@@ -392,7 +472,7 @@ class SurveyTreePanel extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			TreePath p = getSelectedPath();
 			if (p != null) {
-				DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
+				SurveyTreeNode n = (SurveyTreeNode)p.getLastPathComponent();
 				SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 				t.setText(textField.getText());
 				t.setMinOwnerScoreRequired((boolean)minBox.isSelected());
@@ -402,7 +482,16 @@ class SurveyTreePanel extends JPanel {
 				if (t.getClass() == Answer.class) {
 					Answer a = (Answer)t;
 					a.setScoreIfChosen((int)chosenSpinner.getValue());
-					a.setScoreIfUnchosen((int)unchosenSpinner.getValue());
+					a.setChosen((boolean)setBox.isSelected());
+				} else if (t.getClass() == Question.class) {
+					Question q = (Question)t;
+					q.setMinAnswersToChose((int)minAnswerSpinner.getValue());
+					q.setMaxAnswersToChose((int)maxAnswerSpinner.getValue());
+					try {
+						q.setAnswered((boolean)answeredBox.isSelected());
+					} catch (QuestionAnswerCountException ex) {
+						System.out.println(ex); // TODO
+					}
 				}
 			
 				//tree.repaint(); TODO hack
@@ -434,10 +523,10 @@ class SurveyTreePanel extends JPanel {
 		}
     	
     	public void valueChanged(TreeSelectionEvent e) {
-			//DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
-    		DefaultMutableTreeNode node = null;
+			//SurveyTreeNode node = (SurveyTreeNode) e.getPath().getLastPathComponent();
+    		SurveyTreeNode node = null;
     		if (getSelectedPath() != null) {
-    			node = (DefaultMutableTreeNode) getSelectedPath().getLastPathComponent();
+    			node = (SurveyTreeNode) getSelectedPath().getLastPathComponent();
     		}
 			if (node == null) {
 				owner.setAddButtonEnabled(false);
@@ -449,8 +538,11 @@ class SurveyTreePanel extends JPanel {
 				minSpinner.setEnabled(false);
 				maxBox.setEnabled(false);
 				maxSpinner.setEnabled(false);
+				minAnswerSpinner.setEnabled(false);
+				maxAnswerSpinner.setEnabled(false);
 				chosenSpinner.setEnabled(false);
-				unchosenSpinner.setEnabled(false);
+				setBox.setEnabled(false);
+				answeredBox.setEnabled(false);
 				saveButton.setEnabled(false);
 			} else if (node.getUserObject().getClass() == Answer.class) {
 				owner.setAddButtonEnabled(false);
@@ -460,8 +552,11 @@ class SurveyTreePanel extends JPanel {
 				minSpinner.setEnabled(true);
 				maxBox.setEnabled(true);
 				maxSpinner.setEnabled(true);
+				minAnswerSpinner.setEnabled(false);
+				maxAnswerSpinner.setEnabled(false);
 				chosenSpinner.setEnabled(true);
-				unchosenSpinner.setEnabled(true);
+				setBox.setEnabled(true);
+				answeredBox.setEnabled(false);
 				saveButton.setEnabled(true);
 			} else if (node.getUserObject().getClass() == Survey.class) {
 				owner.setAddButtonEnabled(true);
@@ -471,8 +566,25 @@ class SurveyTreePanel extends JPanel {
 				minSpinner.setEnabled(false);
 				maxBox.setEnabled(false);
 				maxSpinner.setEnabled(false);
+				minAnswerSpinner.setEnabled(false);
+				maxAnswerSpinner.setEnabled(false);
 				chosenSpinner.setEnabled(false);
-				unchosenSpinner.setEnabled(false);
+				setBox.setEnabled(false);
+				answeredBox.setEnabled(false);
+				saveButton.setEnabled(true);
+			} else if (node.getUserObject().getClass() == Question.class) {
+				owner.setAddButtonEnabled(true);
+				owner.setRemoveButtonEnabled(true);
+				textField.setEnabled(true);
+				minBox.setEnabled(true);
+				minSpinner.setEnabled(true);
+				maxBox.setEnabled(true);
+				maxSpinner.setEnabled(true);
+				minAnswerSpinner.setEnabled(true);
+				maxAnswerSpinner.setEnabled(true);
+				chosenSpinner.setEnabled(false);
+				setBox.setEnabled(false);
+				answeredBox.setEnabled(true);
 				saveButton.setEnabled(true);
 			} else {
 				owner.setAddButtonEnabled(true);
@@ -482,8 +594,11 @@ class SurveyTreePanel extends JPanel {
 				minSpinner.setEnabled(true);
 				maxBox.setEnabled(true);
 				maxSpinner.setEnabled(true);
+				minAnswerSpinner.setEnabled(false);
+				maxAnswerSpinner.setEnabled(false);
 				chosenSpinner.setEnabled(false);
-				unchosenSpinner.setEnabled(false);
+				setBox.setEnabled(false);
+				answeredBox.setEnabled(false);
 				saveButton.setEnabled(true);
 			}
 			
@@ -533,35 +648,52 @@ class SurveyTreePanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private ImageIcon surveyIcon;
 		private ImageIcon questionnaireIcon;
-        private ImageIcon questionIcon;
-        private ImageIcon answerIcon;
+        private ImageIcon questionUnansweredIcon, questionAnsweredIcon;
+        private ImageIcon answerUnchosenIcon, answerChosenIcon;
 
         public SurveyTreeCellRenderer() {
             
         	surveyIcon = new ImageIcon("Icons/survey-icon.png");
         	questionnaireIcon = new ImageIcon("Icons/questionnaire-icon.png");
-            questionIcon = new ImageIcon("Icons/question-icon.png");
-            answerIcon = new ImageIcon("Icons/answer-icon.png");
+        	questionUnansweredIcon = new ImageIcon("Icons/question-unanswered-icon.png");
+        	questionAnsweredIcon = new ImageIcon("Icons/question-answered-icon.png");
+            answerUnchosenIcon = new ImageIcon("Icons/answer-unchosen-icon.png");
+            answerChosenIcon = new ImageIcon("Icons/answer-chosen-icon.png");
         }
 
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         	super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             setToolTipText(null); //no tool tip
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+            SurveyTreeNode node = (SurveyTreeNode) value;
             SurveyTreeAbstract nodeObject = (SurveyTreeAbstract) (node.getUserObject());
             if (nodeObject.getClass() == Survey.class) {
             	setIcon(surveyIcon);
             } else if (nodeObject.getClass() == Questionnaire.class) {
                 setIcon(questionnaireIcon);
             } else if (nodeObject.getClass() == Question.class) {
-                setIcon(questionIcon);
+                if (((Question)nodeObject).isAnswered()) {
+                	setIcon(questionAnsweredIcon);
+                } else {
+                	setIcon(questionUnansweredIcon);
+                }
             } else if (nodeObject.getClass() == Answer.class) {
-            	setIcon(answerIcon);
+            	if (((Answer)nodeObject).isChosen()) {
+            		setIcon(answerChosenIcon);
+            	} else {
+            		setIcon(answerUnchosenIcon);
+            	}
             }
             // TODO test hintergrundfarbe (für allfällige Simulation)
-            //Color bg = new Color(210,60,120);
-            //setBackgroundNonSelectionColor(bg);
-            //setBackgroundSelectionColor(bg);
+            Color bg;
+            if (nodeObject.isUnreachable()) {
+                bg = new Color(255,185,185);
+        	} else if (!nodeObject.isReachable()) {
+            	bg = new Color(255,220,170);
+            } else {
+            	bg = new Color(255,255,255);
+            }
+        	setBackgroundNonSelectionColor(bg);
+        	//setBackgroundSelectionColor(bg);
             return this;
         }
 
@@ -571,7 +703,7 @@ class SurveyTreePanel extends JPanel {
     	@Override
     	public void actionPerformed(ActionEvent arg0) {
 			TreePath p = getSelectedPath();
-			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
+			SurveyTreeNode n = (SurveyTreeNode)p.getLastPathComponent();
 			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 			t.moveSortUp();
 			setSurvey(survey); // TODO hack bzw. besser kapseln
@@ -582,13 +714,39 @@ class SurveyTreePanel extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			TreePath p = getSelectedPath();
-			DefaultMutableTreeNode n = (DefaultMutableTreeNode)p.getLastPathComponent();
+			SurveyTreeNode n = (SurveyTreeNode)p.getLastPathComponent();
 			SurveyTreeAbstract t = (SurveyTreeAbstract)n.getUserObject();
 			t.moveSortDown();
 			setSurvey(survey); // TODO hack bzw. besser kapseln
 		}
     }
     
+	private void setShowScore(boolean showScore) {
+		this.showScore = showScore;
+		setSurvey(survey);
+	}
+	
+	protected boolean isShowScore() {
+		return showScore;
+	}
+	
+	protected void toggleShowScore() {
+		setShowScore(!showScore);
+	}
+	
+	private void setShowMinMaxScore(boolean showMinMaxScore) {
+		this.showMinMaxScore = showMinMaxScore;
+		setSurvey(survey);
+	}
+	
+	protected boolean isShowMinMaxScore() {
+		return showMinMaxScore;
+	}
+    
+	protected void toggleShowMinMaxScore() {
+		setShowMinMaxScore(!showMinMaxScore);
+	}
+	
 	public void setDebug(boolean debug) {
 		this.debug = debug;
 		if (debug) {
@@ -603,11 +761,7 @@ class SurveyTreePanel extends JPanel {
 	}
 	
 	public void toggleDebug() {
-		if (debug) {
-			setDebug(false);
-		} else {
-			setDebug(true);
-		}
+		setDebug(!debug);
 	}
 
 }
