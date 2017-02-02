@@ -1,11 +1,11 @@
-package zhaw.umfrage.interview;
+package zhaw.umfrage;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import zhaw.umfrage.*;
 
-public class InterviewController {
+public class ConsultationController {
 	
-	private HashSet<View> views;
+	private ArrayList<ConsultationView> consultationViews;
 	private Survey survey;
 	private Summary summary;
 	private Interview interview;
@@ -13,26 +13,46 @@ public class InterviewController {
 	private Question actualQuestion;
 	private boolean running;
 	
-	public InterviewController() {
-		views = new HashSet<View>();
+	public ConsultationController() {
+		consultationViews = new ArrayList<ConsultationView>();
 	}
 	
 	
 	public void setSurvey(Survey survey) {
-		this.survey = survey;
-		summary = new Summary(survey);
-		survey.reset();
+		if (survey != null) {
+			this.survey = survey;
+			summary = new Summary(survey);
+			try {
+				survey.reset();
+			} catch (SurveyFrozenException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			for (ConsultationView v : consultationViews) {
+				v.summaryLoaded(this.summary);
+			}
+		}
 	}
 	
 	public void setSummary(Summary summary) {
-		this.summary = summary;
+		if (summary != null) {
+			if (!survey.equals(summary.getSurvey())) {
+				 //TODO survey not equal exception
+			}
+			this.summary = summary;
+		}
 	}
 	
 	public void startInterview(String interviewer, String interviewee) {
 		interview = new Interview(survey, interviewer, interviewee);
-		survey.reset();
+		try {
+			survey.reset();
+		} catch (SurveyFrozenException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		running = true;
-		for (View v : views) {
+		for (ConsultationView v : consultationViews) {
 			v.interviewStarted();
 		}
 	}
@@ -46,34 +66,44 @@ public class InterviewController {
 		
 		if (actualQuestion != null && !actualQuestion.isAnswered()) {
 			actualQuestion.setAnswered(true);
+			interview.addAnswers(actualQuestion);
 		}
 		
 		if (running && actualQuestionnaire == null) {
 			actualQuestionnaire = (Questionnaire) survey.getNextItem();
-			for (View v : views) {
+			for (ConsultationView v : consultationViews) {
 				v.showQuestionnaire(actualQuestionnaire);
 			}
 		}
-		
 		
 		Question nextQuestion = (Question) actualQuestionnaire.getNextItem();
 		if (nextQuestion == null) {
 			actualQuestionnaire = (Questionnaire) survey.getNextItem();
 			if (actualQuestionnaire != null) {
-				for (View v : views) {
+				for (ConsultationView v : consultationViews) {
 					v.showQuestionnaire(actualQuestionnaire);
 				}
 				nextQuestion = (Question) actualQuestionnaire.getNextItem();
 			}
 		}
 		if (nextQuestion == null) {
-			for (View v : views) {
+			running = false;
+			interview.freeze();
+			summary.addInterview(interview);
+			for (ConsultationView v : consultationViews) {
 				v.interviewFinished();
-				running = false;
+				v.summaryUpdated();
+			}
+			try {
+				survey.reset();
+			} catch (SurveyFrozenException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		} else {
 			actualQuestion = nextQuestion;
-			for (View v : views) {
+			interview.addQuestion(actualQuestion);
+			for (ConsultationView v : consultationViews) {
 				v.showQuestion(nextQuestion);
 				for (SurveyTreeAbstract a : actualQuestion.getItemList()) {
 					v.showAnswer((Answer) a);
@@ -89,7 +119,7 @@ public class InterviewController {
 				if (a == answer) {
 					if (chosen != ((Answer)a).isChosen()) {
 						((Answer)a).setChosen(chosen);
-						for (View v : views) {
+						for (ConsultationView v : consultationViews) {
 							v.setAnswerChosen(answer, chosen);
 						}
 					}
@@ -99,24 +129,30 @@ public class InterviewController {
 	}
 	
 	public void abortInterview() {
-		interview = null;
-		survey.reset();
-		for (View v : views) {
-			v.interviewAborted();
+		if (running) {
+			interview = null;
+			try {
+				survey.reset();
+			} catch (SurveyFrozenException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			for (ConsultationView v : consultationViews) {
+				v.interviewAborted();
+			}
+			running = false;
 		}
-		running = false;
 	}
 	
 	public Interview confirmFinished() {
-		survey.reset();
-		running = false;
-		interview.freeze();
+		//TODO running exception wenn noch am laufen
 		return interview;
 	}
 	
-	public void addView(View v) {
-		views.add(v);
+	public void addView(ConsultationView v) {
+		consultationViews.add(v);
 		// Bring the new view up to date if needed
+		v.summaryLoaded(summary);
 		if (running) {
 			if (actualQuestionnaire != null) {
 				v.showQuestionnaire(actualQuestionnaire);
@@ -128,11 +164,10 @@ public class InterviewController {
 				}
 			}
 		}
-
 	}
 	
-	public void removeView(View v) {
-		views.remove(v);
+	public void removeView(ConsultationView v) {
+		consultationViews.remove(v);
 	}
 	
 	public boolean isRunning() {

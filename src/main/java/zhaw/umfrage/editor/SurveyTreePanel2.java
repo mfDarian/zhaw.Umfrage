@@ -40,7 +40,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import zhaw.umfrage.*;
 
-class SurveyTreePanel extends JPanel {
+class SurveyTreePanel2 extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
 	private SurveyEditor owner;
@@ -63,7 +63,7 @@ class SurveyTreePanel extends JPanel {
 	
 	private JPopupMenu popUp;
 	
-	protected SurveyTreePanel(SurveyEditor owner, Survey survey) {
+	protected SurveyTreePanel2(SurveyEditor owner, Survey survey) {
 		super(new GridLayout(1,2));
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		this.owner = owner;

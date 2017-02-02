@@ -1,23 +1,23 @@
 /**
  * 
  */
-package zhaw.umfrage.interview;
-
-import zhaw.umfrage.Answer;
-import zhaw.umfrage.Question;
-import zhaw.umfrage.Questionnaire;
+package zhaw.umfrage;
 
 /**
  * @author Darian
  *
  */
-public interface View {
+public interface ConsultationView {
 	
 	void interviewStarted();
 	
 	void interviewAborted();
 	
 	void interviewFinished();
+	
+	void summaryLoaded(Summary summary);
+	
+	void summaryUpdated();
 	
 	void showQuestionnaire(Questionnaire questionnaire);
 	

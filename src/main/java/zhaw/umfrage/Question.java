@@ -4,6 +4,8 @@
 package zhaw.umfrage;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author Darian
@@ -15,24 +17,40 @@ public class Question extends SurveyTreeAbstract {
 	private int id;
 	private int minAnswersToChose = 0;
 	private int maxAnswersToChose = 0;
-	private int answerIdCounter;
 	private transient boolean answered;
 	
-	protected Question(Questionnaire owner, String text, int id){
-		super(text, owner);
+	protected Question(Survey root, Questionnaire owner, String text, int id){
+		super(text, owner, root);
 		this.id = id;
-		answerIdCounter = 0;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof Question)) {
+			return false;
+		}
+		Question q = (Question) o;
+		if (minAnswersToChose != q.getMinAnswersToChose()) {
+			return false;
+		}
+		if (maxAnswersToChose != q.getMaxAnswersToChose()) {
+			return false;
+		}
+		if (id != q.getId()) {
+			return false;
+		}
+		return super.equals(o);
 	}
 
 	@Override
-	public SurveyTreeAbstract insertItem(String text) {
-		Answer a = new Answer(this, text, nextAnswerId());
+	public SurveyTreeAbstract insertItem(String text) throws SurveyFrozenException {
+		Answer a = new Answer(root, this, text, owner.nextAnswerId());
 		super.addItem(a);
 		return a;
 	}
 
 	@Override
-	public SurveyTreeAbstract insertItem() {
+	public SurveyTreeAbstract insertItem() throws SurveyFrozenException {
 		return insertItem("New Answer");
 	}
 	
@@ -78,10 +96,15 @@ public class Question extends SurveyTreeAbstract {
 		return maxAnswersToChose;
 	}
 
-	public final void setMinAnswersToChose(int minAnswersToChose) {
-		this.minAnswersToChose = Math.min(minAnswersToChose, itemList.size()); //TODO eine Exception wäre vermutlich schöner
+	public final boolean setMinAnswersToChose(int minAnswersToChose) throws SurveyFrozenException {
+		checkRootNotFrozen();
+		if (minAnswersToChose > itemList.size() || minAnswersToChose < 0) {
+			return false;
+		}
+		this.minAnswersToChose = minAnswersToChose;
 		// auto-set maxAnswersToChose if not 0 and below mew minimum
 		if (maxAnswersToChose != 0 && maxAnswersToChose < this.minAnswersToChose) {
+			System.out.println("Hey!");
 			setMaxAnswersToChose(this.minAnswersToChose);
 		} else {
 			expose();
@@ -91,16 +114,27 @@ public class Question extends SurveyTreeAbstract {
 				//Nothing to do
 			}
 		}
+		return true;
 	}
 
-	public final void setMaxAnswersToChose(int maxAnswersToChose) {
-		this.maxAnswersToChose = Math.min(maxAnswersToChose, itemList.size()); //TODO eine Exception wäre vermutlich schöner
+	public final boolean setMaxAnswersToChose(int maxAnswersToChose) throws SurveyFrozenException {
+		checkRootNotFrozen();
+		if (maxAnswersToChose > itemList.size() || maxAnswersToChose < 0) {
+			return false;
+		}
+		System.out.println("Setting max: " + maxAnswersToChose); //TODO Wohl ein Fehler im Editor GUI. Wird korrekt vom Minimum gehoben, aber das GUI schmeisst nachher nochmal den alten Wert rein...
+		this.maxAnswersToChose = maxAnswersToChose;
 		expose();
 		try {
 			setAnswered(false);
 		} catch (QuestionAnswerCountException ex) {
 			//Nothing to do
 		}
+		return true;
+	}
+	
+	public final boolean isMandatory() {
+		return (minAnswersToChose != 0);
 	}
 	
 	public final boolean isSingleSelect() {
@@ -112,7 +146,7 @@ public class Question extends SurveyTreeAbstract {
 	}
 
 	@Override
-	public void reset() {
+	public void reset() throws SurveyFrozenException {
 		super.reset();
 		try {
 			setAnswered(false);
@@ -130,32 +164,17 @@ public class Question extends SurveyTreeAbstract {
 		return super.isReachable();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void calcMinScoreAchieveable() {
 		if (itemList == null || itemList.isEmpty()) {
 			minScoreAchieveable = 0;
 		} else {
-			ArrayList<SurveyTreeAbstract> challengerList;
-			Answer candidate;
-			challengerList = (ArrayList<SurveyTreeAbstract>) itemList.clone();
-			candidate = (Answer) itemList.get(0);
+			
 			ArrayList<Answer> answersByScoreChosen = new ArrayList<>();
-			while (!challengerList.isEmpty()) {
-				for (SurveyTreeAbstract t : itemList) {
-					if (challengerList.contains(t)) {
-						Answer challenger = (Answer)t;
-						if (candidate.getScoreIfChosen() > challenger.getScoreIfChosen()) {
-							candidate = challenger;
-						}
-					}
-				}
-				answersByScoreChosen.add(candidate);
-				challengerList.remove(candidate);
-				if (!challengerList.isEmpty()) {
-					candidate = (Answer) challengerList.get(0);
-				}
+			for (SurveyTreeAbstract t : itemList) {
+				answersByScoreChosen.add((Answer)t);
 			}
+			Collections.sort(answersByScoreChosen, new AnswersByScoreChosen(false));
 			
 			ArrayList<Answer> chosen = new ArrayList<>();
 			int simCount = 0;
@@ -184,36 +203,22 @@ public class Question extends SurveyTreeAbstract {
 			minScoreAchieveable = lowestScore;
 			
 		}
+		
 	}
 
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void calcMaxScoreAchieveable() {
 		if (itemList == null || itemList.isEmpty()) {
 			maxScoreAchieveable = 0;
 		} else {
-			ArrayList<SurveyTreeAbstract> challengerList;
-			Answer candidate;
-			challengerList = (ArrayList<SurveyTreeAbstract>) itemList.clone();
-			candidate = (Answer) itemList.get(0);
+
 			ArrayList<Answer> answersByScoreChosen = new ArrayList<>();
-			while (!challengerList.isEmpty()) {
-				for (SurveyTreeAbstract t : itemList) {
-					if (challengerList.contains(t)) {
-						Answer challenger = (Answer)t;
-						if (candidate.getScoreIfChosen() < challenger.getScoreIfChosen()) {
-							candidate = challenger;
-						}
-					}
-				}
-				answersByScoreChosen.add(candidate);
-				challengerList.remove(candidate);
-				if (!challengerList.isEmpty()) {
-					candidate = (Answer) challengerList.get(0);
-				}
+			for (SurveyTreeAbstract t : itemList) {
+				answersByScoreChosen.add((Answer)t);
 			}
-			
+			Collections.sort(answersByScoreChosen, new AnswersByScoreChosen(true));
+
 			ArrayList<Answer> chosen = new ArrayList<>();
 			int simCount = 0;
 			int highestScore = 0;
@@ -247,9 +252,6 @@ public class Question extends SurveyTreeAbstract {
 		return id;
 	}
 	
-	protected int nextAnswerId() {
-		return ++answerIdCounter;
-	}
 	
 	private int getMinAnswerCount() {
 		return minAnswersToChose;
@@ -263,6 +265,36 @@ public class Question extends SurveyTreeAbstract {
 			}
 		}
 		return maxAnswerCount;
+	}
+	
+	
+	class AnswersByScoreChosen implements Comparator<Answer>{
+		
+		private boolean descending;
+		
+		AnswersByScoreChosen(boolean descending) {
+			this.descending = descending;
+		}
+
+		@Override
+		public int compare(Answer a1, Answer a2) {
+			if (a1.getScoreIfChosen() < a2.getScoreIfChosen()) {
+				if (descending) {
+					return 1;
+				} else {
+					return -1;
+				}
+			}
+			if (a1.getScoreIfChosen() > a2.getScoreIfChosen()) {
+				if (descending) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
+			return 0;
+		}
+		
 	}
 
 

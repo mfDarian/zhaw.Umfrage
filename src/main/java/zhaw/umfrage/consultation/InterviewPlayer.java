@@ -1,4 +1,4 @@
-package zhaw.umfrage.interview;
+package zhaw.umfrage.consultation;
 
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -6,6 +6,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -14,6 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -25,20 +28,23 @@ import javax.swing.UIManager;
 import zhaw.umfrage.*;
 
 
-public class InterviewPlayer extends JPanel implements View, ActionListener {
+public class InterviewPlayer extends JPanel implements ConsultationView, ActionListener {
 	
 	static String OPEN_COMMAND = "open";
 	
 	private JFrame frame;
 	private Survey survey;
 	private File actualFile;
-	private InterviewController controller;
+	private ConsultationController controller;
+	private QuestionnairePanel questionnairePanel;
 	private QuestionPanel questionPanel;
 	private AnswerPanel answerPanel;
 	private JButton forwardButton;
 	private JButton startButton;
 	private Interview interview;
 	private ArrayList<AnswerBox> answerList;
+	private JLabel interviewCount;
+	private Summary summary;
 	
 	
 	public static void main(String[] args) {
@@ -54,15 +60,17 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
     public InterviewPlayer(JFrame frame) {
         super();
         this.frame = frame;
-        controller = new InterviewController();
-        controller.addView(this);
+        controller = new ConsultationController();
         answerList = new ArrayList<AnswerBox>();
         
         //Create the components.
         
         //Main Panel, das die anderen Panels trägt
-        JPanel mainPanel = new JPanel(new GridLayout(4,0));
+        JPanel mainPanel = new JPanel(new GridLayout(7,0));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        
+        questionnairePanel = new QuestionnairePanel();
+        mainPanel.add(questionnairePanel);
         
         questionPanel = new QuestionPanel();
         mainPanel.add(questionPanel);
@@ -71,7 +79,9 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
         mainPanel.add(answerPanel);
         
         forwardButton = new JButton("Weiter");
+        forwardButton.setEnabled(false);
         startButton = new JButton("Start");
+        startButton.setEnabled(false);
         
         forwardButton.addActionListener(new ActionListener(){
 			@Override
@@ -91,7 +101,6 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (survey != null) {
-					controller.setSurvey(survey);
 					controller.startInterview("Interviewer", "anonym");
 					try {
 						controller.proceed();
@@ -106,6 +115,10 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
         mainPanel.add(forwardButton);
         mainPanel.add(startButton);
         
+        interviewCount = new JLabel("0");
+        mainPanel.add(interviewCount);
+        
+        controller.addView(this);
         
         add(mainPanel);
     
@@ -120,6 +133,7 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
 				File file = fileChoose.getSelectedFile();
 				if (file != null) {
 					survey = Survey.getFromFile(file);
+					controller.setSurvey(survey);
 					actualFile = file;
 				}
 			} catch (Exception ex) {
@@ -128,6 +142,23 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
         }
     }
 
+    class QuestionnairePanel extends JPanel {
+    	
+    	private JTextArea questionnaireText;
+    	private Font f = new Font("Calibri", 48, 48);
+    	
+    	QuestionnairePanel() {
+    		setFont(f);
+    		questionnaireText = new JTextArea();
+    		questionnaireText.setFont(f);
+    		add(questionnaireText);
+    	}
+    	
+    	void setQuestionnaireText(String text) {
+    		questionnaireText.setText(text);
+    	}
+    }
+    
     class QuestionPanel extends JPanel {
     	
     	private JTextArea questionText;
@@ -151,7 +182,7 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
     	private Font f = new Font("Arial", 30, 30);
     	
     	AnswerPanel () {
-    		this.setLayout(new FlowLayout());
+    		this.setLayout(new GridLayout(0,1));
     		//scrollPane = new JScrollPane();
     		//add(scrollPane);
     	}
@@ -180,9 +211,9 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
     	AnswerBox(Answer answer) {
     		this.answer = answer;
     		box = new JCheckBox(answer.getText());
-    		box.addActionListener(new ActionListener(){
+    		box.addItemListener(new ItemListener() {
 				@Override
-				public void actionPerformed(ActionEvent e) {
+				public void itemStateChanged(ItemEvent ev) {
 					controller.setAnswerChosen(answer, box.isSelected());
 				}});
     	}
@@ -240,27 +271,45 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
 	@Override
 	public void interviewStarted() {
 		// TODO Auto-generated method stub
-		System.out.println("Gestartet");
+		forwardButton.setEnabled(true);
+		startButton.setEnabled(false);
 	}
 
 	@Override
 	public void interviewAborted() {
 		// TODO Auto-generated method stub
-		System.out.println("Abgebrochen");
+		startButton.setEnabled(true);
 	}
 
 	@Override
 	public void interviewFinished() {
 		// TODO Auto-generated method stub
-		System.out.println("Beendet");
+		forwardButton.setEnabled(false);
+		startButton.setEnabled(true);
 		interview = controller.confirmFinished();
+	}
+	
+	@Override
+	public void summaryLoaded(Summary summary) {
+		// TODO Auto-generated method stub
+		System.out.println("Summary Loaded");
+		this.summary = summary;
+		startButton.setEnabled(true);
+		//summaryUpdated();
+	}
+	
+	@Override
+	public void summaryUpdated() {
+		// TODO Auto-generated method stub
+		System.out.println("Summary Updated");
+		interviewCount.setText(summary.getInterviewCount().toString());
 	}
 
 	@Override
 	public void showQuestionnaire(Questionnaire questionnaire) {
 		// TODO Auto-generated method stub
 		System.out.println("Questionnaire anzeigen: " + questionnaire);
-		
+		questionnairePanel.setQuestionnaireText(questionnaire.getText());
 	}
 
 	@Override
@@ -276,6 +325,7 @@ public class InterviewPlayer extends JPanel implements View, ActionListener {
 		// TODO Auto-generated method stub
 		System.out.println("Answer anzeigen: " + answer);
 		answerPanel.addAnswerBox(new AnswerBox(answer));
+		frame.pack();
 	}
 
 	@Override

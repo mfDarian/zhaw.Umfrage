@@ -16,9 +16,24 @@ public class Answer extends SurveyTreeAbstract {
 	private int scoreIfChosen = 0;
 	private transient boolean chosen;
 	
-	public Answer(Question owner, String text, int id) {
-		super(text, owner);
+	protected Answer(Survey root, Question owner, String text, int id) {
+		super(text, owner, root);
 		this.id = id;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof Answer)) {
+			return false;
+		}
+		Answer a = (Answer) o;
+		if (scoreIfChosen != a.getScoreIfChosen()) {
+			return false;
+		}
+		if (id != a.getId()) {
+			return false;
+		}
+		return super.equals(o);
 	}
 	
 	@Override
@@ -35,7 +50,8 @@ public class Answer extends SurveyTreeAbstract {
 		return scoreIfChosen;
 	}
 
-	public final void setScoreIfChosen(int scoreIfChosen) {
+	public final void setScoreIfChosen(int scoreIfChosen) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.scoreIfChosen = scoreIfChosen;
 		expose();
 	}
@@ -54,7 +70,7 @@ public class Answer extends SurveyTreeAbstract {
 	}
 
 	@Override
-	public void reset() {
+	public void reset() throws SurveyFrozenException {
 		super.reset();
 		chosen = false;
 	}

@@ -48,6 +48,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
     private JButton removeButton;
     private static String CLEAR_COMMAND = "clear";
     private JButton clearButton;
+    private static String FREEZE_COMMAND = "freeze";
+    private JButton freezeButton;
     
     private SurveyTreePanel treePanel;
 
@@ -71,6 +73,10 @@ public class SurveyEditor extends JPanel implements ActionListener {
         clearButton.setActionCommand(CLEAR_COMMAND);
         clearButton.addActionListener(this);
         
+        freezeButton = new JButton("Freeze");
+        freezeButton.setActionCommand(FREEZE_COMMAND);
+        freezeButton.addActionListener(this);
+        
         setAddButtonEnabled(false);
         setRemoveButtonEnabled(false);
 
@@ -91,6 +97,9 @@ public class SurveyEditor extends JPanel implements ActionListener {
         buttonPanel.add(removeButton, gbc); 
         gbc.gridx = 12;
         buttonPanel.add(clearButton, gbc);
+        gbc.gridx = 18;
+        buttonPanel.add(freezeButton, gbc);
+        
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridx = 5;
@@ -98,6 +107,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
         buttonPanel.add(new JLabel(" "), gbc);
         gbc.gridx = 11;
         buttonPanel.add(new JLabel(" "), gbc);
+        gbc.gridx = 17;
+        buttonPanel.add(new JLabel(" "), gbc);    
         
         add(buttonPanel, BorderLayout.SOUTH);
     }
@@ -128,6 +139,8 @@ public class SurveyEditor extends JPanel implements ActionListener {
             //Clear button clicked.
         	treePanel.unselect();
             treePanel.clear();
+        } else if (FREEZE_COMMAND.equals(command)) {
+        	treePanel.freeze();
         } else if (DEBUG_COMMAND.equals(command)) {
         	treePanel.toggleDebug();
         } else if (SHOW_SCORE_COMMAND.equals(command)) {
@@ -262,7 +275,7 @@ public class SurveyEditor extends JPanel implements ActionListener {
         showMinMaxScore.addActionListener(newContentPane);
 
         //Display the window.
-        frame.setMinimumSize(new Dimension(1000, 1000));
+        frame.setMinimumSize(new Dimension(1024, 800));
         frame.pack();
         frame.setLocationByPlatform(true);
         frame.setVisible(true);

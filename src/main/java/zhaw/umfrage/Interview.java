@@ -1,9 +1,10 @@
 /**
  * 
  */
-package zhaw.umfrage.interview;
+package zhaw.umfrage;
 
 import java.io.Serializable;
+import java.util.HashSet;
 
 import zhaw.umfrage.*;
 
@@ -17,6 +18,9 @@ public class Interview implements Serializable {
 	transient private Survey survey;
 	private String interviewer;
 	private String interviewee;
+	private HashSet<Integer> questionsAsked;
+	private HashSet<Integer> answersChosen;
+	private int score;
 	private boolean frozen;
 
 	
@@ -24,6 +28,8 @@ public class Interview implements Serializable {
 		this.survey = survey;
 		this.interviewer = interviewer;
 		this.interviewee = interviewee;
+		questionsAsked = new HashSet<Integer>();
+		answersChosen = new HashSet<Integer>();
 	}
 	
 	public Survey getSurvey() {
@@ -46,7 +52,26 @@ public class Interview implements Serializable {
 		return interviewee;
 	}
 	
+	public void addQuestion(Question q) {
+		questionsAsked.add(q.getId());
+	}
+	
+	public void addAnswers(Question q) {
+		for (SurveyTreeAbstract t : q.getItemList()) {
+			Answer a = (Answer) t;
+			if (a.isChosen()) {
+				answersChosen.add(a.getId());
+				System.out.println("Answer added!");
+			}
+		}
+	}
+	
+	public int getScore() {
+		return score;
+	}
+	
 	public void freeze() {
+		score = survey.getScore();
 		System.out.println("Interview eingefroren");
 		frozen = true;
 	}

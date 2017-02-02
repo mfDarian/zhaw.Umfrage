@@ -4,6 +4,7 @@
 package zhaw.umfrage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.io.Serializable;
 
@@ -14,9 +15,10 @@ import java.io.Serializable;
 public abstract class SurveyTreeAbstract implements Serializable, Comparable<SurveyTreeAbstract> {
 	
 	private static final long serialVersionUID = 1L;
-	private String text;
+	protected Survey root;
 	protected SurveyTreeAbstract owner;
-	protected ArrayList<SurveyTreeAbstract> itemList;
+	protected final ArrayList<SurveyTreeAbstract> itemList;
+	private String text;
 	private int sort = 0;
 	private boolean minOwnerScoreRequired;
 	private boolean maxOwnerScoreAllowed;
@@ -25,31 +27,91 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	protected int minScoreAchieveable = 0;
 	protected int maxScoreAchieveable = 0;
 	private boolean unreachable;
+	boolean stateChanged;
 	protected transient int score = 0;
 	private transient int actualItem = 0;
 	
-	boolean stateChanged;
-	
-	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
+
+	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner, Survey root) {
 		this.text = text;
 		this.itemList = new ArrayList<SurveyTreeAbstract>();
 		if (owner != null) {
 			this.owner = owner;
 			sort = owner.getMaxSort() + 1;
 		}
+		if (root != null) {
+			this.root = root;
+		}
 	}
 	
-	protected final void addItem(SurveyTreeAbstract item) {
+	protected final void checkRootNotFrozen() throws SurveyFrozenException {
+		if (root != null && root.isFrozen()) {
+			throw new SurveyFrozenException();
+		}
+	}
+	
+	protected final void checkRootFrozen() throws SurveyNotFrozenException {
+		if (root != null && !root.isFrozen()) {
+			throw new SurveyNotFrozenException();
+		}
+	}
+	
+	protected final void addItem(SurveyTreeAbstract item) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		itemList.add(item);
+		item.expose();
 	}
 	
 	
-	public final void removeItem(SurveyTreeAbstract item) {
+	public final void removeItem(SurveyTreeAbstract item) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		if (!itemList.contains(item)) {
 			return;
 		}
 		itemList.remove(item);
 		expose();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof SurveyTreeAbstract)) {
+			return false;
+		}
+		SurveyTreeAbstract s = (SurveyTreeAbstract) o;
+		// Do not check if owners are equal, since item check would trigger endless loop (referencing back to owner)
+		if (!text.equals(s.getText())) {
+			return false;
+		}
+		if (owner == null && s.getOwner() != null) {
+			return false;
+		}
+		if (owner != null && s.getOwner() == null) {
+			return false;
+		}
+		if (sort != s.getSort()) {
+			return false;
+		}
+		if (minOwnerScoreRequired != s.getMinOwnerScoreRequired()) {
+			return false;
+		}
+		if (maxOwnerScoreAllowed != s.getMaxOwnerScoreAllowed()) {
+			return false;
+		}
+		if (minOwnerScore != s.getMinOwnerScore()) {
+			return false;
+		}
+		if (maxOwnerScore != s.getMaxOwnerScore()) {
+			return false;
+		}
+		if (itemList.size() != s.itemList.size()) {
+			return false;
+		}
+		for (SurveyTreeAbstract t : itemList) {
+			if (!(t.equals(s.itemList.get(itemList.indexOf(t))))) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	@Override
@@ -68,7 +130,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return 0;
 	}
 	
-	public final void setText(String text) {
+	public final void setText(String text) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.text = text;
 	}
 	
@@ -81,15 +144,18 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return owner;
 	}
 	
-	public final ArrayList<SurveyTreeAbstract> getItemList() {
-		return itemList;
+	public final Collection<SurveyTreeAbstract> getItemList() {
+		return Collections.unmodifiableList(itemList);
+		
 	}
 	
-	public abstract SurveyTreeAbstract insertItem(String text);
+	public abstract SurveyTreeAbstract insertItem(String text) throws SurveyFrozenException;
 	
-	public abstract SurveyTreeAbstract insertItem();
+	public abstract SurveyTreeAbstract insertItem() throws SurveyFrozenException;
 
-
+	protected int nextAnswerId() {
+		return owner.nextAnswerId();
+	}
 	
 	public final int getMaxSort() {
 		int maxSort = 0;
@@ -106,7 +172,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return sort;
 	}
 	
-	private final void setSort(int sort) {
+	private final void setSort(int sort) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.sort = sort;
 		reset();
 		if (owner != null) {
@@ -114,13 +181,12 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		}
 	}
 	
-	public final void moveSortUp() {
+	public final void moveSortUp() throws SurveyFrozenException {
 		if (owner != null) {
-			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
 			int i = 0;
 			int thisSort = sort;
 			SurveyTreeAbstract lastItem = null;
-			for (SurveyTreeAbstract item : ownerItemList) {
+			for (SurveyTreeAbstract item : owner.itemList) {
 				i++;
 				if (item == this) {
 					if (i == 1) {
@@ -139,13 +205,12 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		expose();
 	}
 	
-	public final void moveSortDown() {
+	public final void moveSortDown() throws SurveyFrozenException {
 		if (owner != null) {
-			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
 			int i = 0;
 			int thisSort = sort;
 			boolean takeNext = false;
-			for (SurveyTreeAbstract item : ownerItemList) {
+			for (SurveyTreeAbstract item : owner.itemList) {
 				i++;
 				if (takeNext) {
 					setSort(item.getSort());
@@ -153,7 +218,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 					break;
 				}
 				if (item == this) {
-					if (i == ownerItemList.size()) {
+					if (i == owner.itemList.size()) {
 						return;
 					} else {
 						takeNext = true;
@@ -172,7 +237,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return minOwnerScore;
 	}
 	
-	public final void setMinOwnerScoreRequired(boolean minOwnerScoreRequired) {
+	public final void setMinOwnerScoreRequired(boolean minOwnerScoreRequired) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.minOwnerScoreRequired = minOwnerScoreRequired;
 		expose();
 	}
@@ -181,7 +247,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return minOwnerScoreRequired;
 	}
 
-	public final void setMaxOwnerScoreAllowed(boolean maxOwnerScoreAllowed) {
+	public final void setMaxOwnerScoreAllowed(boolean maxOwnerScoreAllowed) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.maxOwnerScoreAllowed = maxOwnerScoreAllowed;
 		expose();
 	}
@@ -190,7 +257,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return maxOwnerScoreAllowed;
 	}
 	
-	public final void setMinOwnerScore(int minOwnerScore) {
+	public final void setMinOwnerScore(int minOwnerScore) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.minOwnerScore = minOwnerScore;
 		if (getMinOwnerScoreRequired()) {
 			expose();
@@ -201,7 +269,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return maxOwnerScore;
 	}
 
-	public final void setMaxOwnerScore(int maxOwnerScore) {
+	public final void setMaxOwnerScore(int maxOwnerScore) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.maxOwnerScore = maxOwnerScore;
 		if (getMaxOwnerScoreAllowed()) {
 			expose();
@@ -227,7 +296,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return score;
 	}
 	
-	public void reset() {
+	public void reset() throws SurveyFrozenException  {
+		checkRootNotFrozen();
 		actualItem = 0;
 		setScore(0);
 		if (itemList != null) {
@@ -297,7 +367,6 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 	
 	
-	
 	public final SurveyTreeAbstract getNextItem() {
 		SurveyTreeAbstract nextItem = null;
 		while (actualItem < itemList.size()) {
@@ -313,7 +382,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 
 
-	public final void recalculate() {
+	public final void recalculate() { //TODO muss der public sein?
 		calculateScoreAchieveable();
 		calculateReachability();
 	}
