@@ -3,23 +3,37 @@
  */
 package zhaw.umfrage;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author Darian
  *
  */
 public class Answer extends SurveyTreeAbstract {
 	
-	private static final long serialVersionUID = 1L;
-	private int scoreIfChosen = 0;
-	private int scoreIfUnchosen = 0;
-	private transient boolean chosen;
-    
+	//TODO: Wenn die Frage schon beantwortet ist, muss das chose und unchose eine Exception werfen!
 	
-	public Answer(Question owner, String text) {
-		super(text, owner);
+	private static final long serialVersionUID = 1L;
+	private int id;
+	private int scoreIfChosen = 0;
+	private transient boolean chosen;
+	
+	protected Answer(Survey root, Question owner, String text, int id) {
+		super(text, owner, root);
+		this.id = id;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof Answer)) {
+			return false;
+		}
+		Answer a = (Answer) o;
+		if (scoreIfChosen != a.getScoreIfChosen()) {
+			return false;
+		}
+		if (id != a.getId()) {
+			return false;
+		}
+		return super.equals(o);
 	}
 	
 	@Override
@@ -36,16 +50,10 @@ public class Answer extends SurveyTreeAbstract {
 		return scoreIfChosen;
 	}
 
-	public final void setScoreIfChosen(int scoreIfChosen) {
+	public final void setScoreIfChosen(int scoreIfChosen) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.scoreIfChosen = scoreIfChosen;
-	}
-
-	public final int getScoreIfUnchosen() {
-		return scoreIfUnchosen;
-	}
-
-	public final void setScoreIfUnchosen(int scoreIfUnchosen) {
-		this.scoreIfUnchosen = scoreIfUnchosen;
+		expose();
 	}
 
 	public final boolean isChosen() {
@@ -57,16 +65,38 @@ public class Answer extends SurveyTreeAbstract {
 		if (chosen) {
 			setScore(scoreIfChosen);
 		} else {
-			setScore(scoreIfUnchosen);
+			setScore(0);
 		}
 	}
 
 	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
+	public void reset() throws SurveyFrozenException {
 		super.reset();
 		chosen = false;
 	}
- 
+	
+	/*
+	@Override
+	public boolean isReachable() {
+		return owner.isReachable();
+	}
+	*/
+	
 
+	@Override
+	protected void calcMinScoreAchieveable() {
+		minScoreAchieveable = Math.min(scoreIfChosen, 0);
+	}
+
+	@Override
+	protected void calcMaxScoreAchieveable() {
+		maxScoreAchieveable = Math.max(scoreIfChosen, 0);
+	}
+
+
+	public final int getId() {
+		return id;
+	}
+
+	
 }

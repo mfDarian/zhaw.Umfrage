@@ -4,11 +4,8 @@
 package zhaw.umfrage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.swing.JList;
-
 import java.io.Serializable;
 
 /**
@@ -18,33 +15,103 @@ import java.io.Serializable;
 public abstract class SurveyTreeAbstract implements Serializable, Comparable<SurveyTreeAbstract> {
 	
 	private static final long serialVersionUID = 1L;
-	private String text;
+	protected Survey root;
 	protected SurveyTreeAbstract owner;
-	protected ArrayList<SurveyTreeAbstract> itemList;
+	protected final ArrayList<SurveyTreeAbstract> itemList;
+	private String text;
 	private int sort = 0;
 	private boolean minOwnerScoreRequired;
 	private boolean maxOwnerScoreAllowed;
 	private int minOwnerScore;
 	private int maxOwnerScore;
+	protected int minScoreAchieveable = 0;
+	protected int maxScoreAchieveable = 0;
+	private boolean unreachable;
+	boolean stateChanged;
 	protected transient int score = 0;
 	private transient int actualItem = 0;
-	private long idCounter = 0; // 17.01 Swen: hier Versuche ich eine Zähler-Variable zu installieren. Muss das "static" sein? ich glauben nicht in diesem Fall.
-	private int size = 0; // 19.01 Swen: Diese Variable soll die Anzahl der Objekte einer Sammlung zeigen.
-	
 	
 
-	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner) {
+	protected SurveyTreeAbstract (String text, SurveyTreeAbstract owner, Survey root) {
 		this.text = text;
 		this.itemList = new ArrayList<SurveyTreeAbstract>();
 		if (owner != null) {
 			this.owner = owner;
 			sort = owner.getMaxSort() + 1;
 		}
-		idCounter= idCounter ++; //17.01 Swen hoffe das funktioniert als allgemeiner ID-Counter...
+		if (root != null) {
+			this.root = root;
+		}
 	}
 	
-	protected final void addItem(SurveyTreeAbstract item) {
+	protected final void checkRootNotFrozen() throws SurveyFrozenException {
+		if (root != null && root.isFrozen()) {
+			throw new SurveyFrozenException();
+		}
+	}
+	
+	protected final void checkRootFrozen() throws SurveyNotFrozenException {
+		if (root != null && !root.isFrozen()) {
+			throw new SurveyNotFrozenException();
+		}
+	}
+	
+	protected final void addItem(SurveyTreeAbstract item) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		itemList.add(item);
+		item.expose();
+	}
+	
+	
+	public final void removeItem(SurveyTreeAbstract item) throws SurveyFrozenException {
+		checkRootNotFrozen();
+		if (!itemList.contains(item)) {
+			return;
+		}
+		itemList.remove(item);
+		expose();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof SurveyTreeAbstract)) {
+			return false;
+		}
+		SurveyTreeAbstract s = (SurveyTreeAbstract) o;
+		// Do not check if owners are equal, since item check would trigger endless loop (referencing back to owner)
+		if (!text.equals(s.getText())) {
+			return false;
+		}
+		if (owner == null && s.getOwner() != null) {
+			return false;
+		}
+		if (owner != null && s.getOwner() == null) {
+			return false;
+		}
+		if (sort != s.getSort()) {
+			return false;
+		}
+		if (minOwnerScoreRequired != s.getMinOwnerScoreRequired()) {
+			return false;
+		}
+		if (maxOwnerScoreAllowed != s.getMaxOwnerScoreAllowed()) {
+			return false;
+		}
+		if (minOwnerScore != s.getMinOwnerScore()) {
+			return false;
+		}
+		if (maxOwnerScore != s.getMaxOwnerScore()) {
+			return false;
+		}
+		if (itemList.size() != s.itemList.size()) {
+			return false;
+		}
+		for (SurveyTreeAbstract t : itemList) {
+			if (!(t.equals(s.itemList.get(itemList.indexOf(t))))) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	@Override
@@ -63,7 +130,8 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return 0;
 	}
 	
-	public final void setText(String text) {
+	public final void setText(String text) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.text = text;
 	}
 	
@@ -76,19 +144,17 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return owner;
 	}
 	
-	public final ArrayList<SurveyTreeAbstract> getItemList() {
-		return itemList;
+	public final Collection<SurveyTreeAbstract> getItemList() {
+		return Collections.unmodifiableList(itemList);
+		
 	}
 	
-	public abstract SurveyTreeAbstract insertItem(String text);
+	public abstract SurveyTreeAbstract insertItem(String text) throws SurveyFrozenException;
 	
-	public abstract SurveyTreeAbstract insertItem();
+	public abstract SurveyTreeAbstract insertItem() throws SurveyFrozenException;
 
-	public final void removeItem(SurveyTreeAbstract item) {
-		if (!itemList.contains(item)) {
-			return;
-		}
-		itemList.remove(item);
+	protected int nextAnswerId() {
+		return owner.nextAnswerId();
 	}
 	
 	public final int getMaxSort() {
@@ -106,20 +172,21 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return sort;
 	}
 	
-	public final void setSort(int sort) {
+	private final void setSort(int sort) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.sort = sort;
+		reset();
 		if (owner != null) {
 			owner.notifySortChange();
 		}
 	}
 	
-	public final void moveSortUp() {
+	public final void moveSortUp() throws SurveyFrozenException {
 		if (owner != null) {
-			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
 			int i = 0;
 			int thisSort = sort;
 			SurveyTreeAbstract lastItem = null;
-			for (SurveyTreeAbstract item : ownerItemList) {
+			for (SurveyTreeAbstract item : owner.itemList) {
 				i++;
 				if (item == this) {
 					if (i == 1) {
@@ -131,17 +198,19 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 				}
 				lastItem = item;
 			}
-			lastItem.setSort(thisSort);
+			if (lastItem != null) {
+				lastItem.setSort(thisSort);
+			}
 		}
+		expose();
 	}
 	
-	public final void moveSortDown() {
+	public final void moveSortDown() throws SurveyFrozenException {
 		if (owner != null) {
-			ArrayList<SurveyTreeAbstract> ownerItemList = owner.getItemList();
 			int i = 0;
 			int thisSort = sort;
 			boolean takeNext = false;
-			for (SurveyTreeAbstract item : ownerItemList) {
+			for (SurveyTreeAbstract item : owner.itemList) {
 				i++;
 				if (takeNext) {
 					setSort(item.getSort());
@@ -149,7 +218,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 					break;
 				}
 				if (item == this) {
-					if (i == ownerItemList.size()) {
+					if (i == owner.itemList.size()) {
 						return;
 					} else {
 						takeNext = true;
@@ -157,6 +226,7 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 				}
 			}
 		}
+		expose();
 	}
 	
 	protected final void notifySortChange() {
@@ -167,43 +237,58 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return minOwnerScore;
 	}
 	
-	public final void setMinOwnerScoreRequired(boolean minOwnerScoreRequired) {
+	public final void setMinOwnerScoreRequired(boolean minOwnerScoreRequired) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.minOwnerScoreRequired = minOwnerScoreRequired;
+		expose();
 	}
 	
 	public final boolean getMinOwnerScoreRequired() {
 		return minOwnerScoreRequired;
 	}
 
-	public final void setMaxOwnerScoreAllowed(boolean maxOwnerScoreAllowed) {
+	public final void setMaxOwnerScoreAllowed(boolean maxOwnerScoreAllowed) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.maxOwnerScoreAllowed = maxOwnerScoreAllowed;
+		expose();
 	}
 	
 	public final boolean getMaxOwnerScoreAllowed() {
 		return maxOwnerScoreAllowed;
 	}
 	
-	public final void setMinOwnerScore(int minOwnerScore) {
+	public final void setMinOwnerScore(int minOwnerScore) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.minOwnerScore = minOwnerScore;
+		if (getMinOwnerScoreRequired()) {
+			expose();
+		}
 	}
 
 	public final int getMaxOwnerScore() {
 		return maxOwnerScore;
 	}
 
-	public final void setMaxOwnerScore(int maxOwnerScore) {
+	public final void setMaxOwnerScore(int maxOwnerScore) throws SurveyFrozenException {
+		checkRootNotFrozen();
 		this.maxOwnerScore = maxOwnerScore;
+		if (getMaxOwnerScoreAllowed()) {
+			expose();
+		}
 	}
 
-	protected void notifyScoreChange(SurveyTreeAbstract item) {
-		int score = this.score + item.getScore();
-		setScore(score);
+	protected void notifyScoreChange() {
+		int newScore = 0;
+		for (SurveyTreeAbstract i : itemList) {
+			newScore += i.getScore();
+		}
+		setScore(newScore);
 	}
 	
-	protected final void setScore(int score) {
+	protected void setScore(int score) {
 		this.score = score;
 		if (owner != null) {
-			getOwner().notifyScoreChange(this);
+			getOwner().notifyScoreChange();
 		}
 	}
 	
@@ -211,9 +296,10 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return score;
 	}
 	
-	public void reset() {
+	public void reset() throws SurveyFrozenException  {
+		checkRootNotFrozen();
 		actualItem = 0;
-		score = 0;
+		setScore(0);
 		if (itemList != null) {
 			for (SurveyTreeAbstract item : itemList) {
 				item.reset();
@@ -221,55 +307,167 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		}
 	}
 	
+	public final boolean hasItems() {
+		return itemList.size() != 0;
+	}
+	
+	public final boolean isEmpty() {
+		return !hasItems();
+	}
+	
+	public boolean isReachable() {
+		boolean reachable = false;
+		if (!unreachable) {
+			if (owner.isReachable()) {
+				if (!getMinOwnerScoreRequired() || (getMinOwnerScoreRequired() && owner.getScore() >= getMinOwnerScore())) {
+					if (!getMaxOwnerScoreAllowed() || (getMaxOwnerScoreAllowed() && owner.getScore() <= getMaxOwnerScore())) {
+						return true;
+					}
+				}
+			}
+		}
+		return reachable;
+	}
+	
+	protected void calcMinScoreAchieveable() {
+		int minScore = 0;
+		if (itemList != null) {
+			for (SurveyTreeAbstract t : itemList) {
+				if (!t.isUnreachable()) {
+					minScore += t.getMinScoreAchieveable();
+				}
+			}
+		}
+		minScoreAchieveable = minScore;
+	}
+	
+	public final int getMinScoreAchieveable() {
+		return minScoreAchieveable;
+	}
+	
+	protected void calcMaxScoreAchieveable() {
+		int maxScore = 0;
+		if (itemList != null) {
+			for (SurveyTreeAbstract t : itemList) {
+				if (!t.isUnreachable()) {
+					maxScore += t.getMaxScoreAchieveable();
+				}
+			}
+		}
+		maxScoreAchieveable = maxScore;
+	}
+	
+	public final int getMaxScoreAchieveable() {
+		return maxScoreAchieveable;
+	}
+	
+	
+	public boolean isUnreachable() {
+		return unreachable;
+	}
+	
+	
 	public final SurveyTreeAbstract getNextItem() {
 		SurveyTreeAbstract nextItem = null;
 		while (actualItem < itemList.size()) {
 			nextItem = itemList.get(actualItem);
-			if (!nextItem.getMinOwnerScoreRequired() || (nextItem.getMinOwnerScoreRequired() && score >= nextItem.getMinOwnerScore())) {
-				if (!nextItem.getMaxOwnerScoreAllowed() || (nextItem.getMaxOwnerScoreAllowed() && score <= nextItem.getMaxOwnerScore())) {
-					actualItem++;
-					return nextItem;
-				}
+			if (nextItem.isReachable()) {
+				actualItem++;
+				return nextItem;
 			}
 			actualItem++;
 		}
 		actualItem = itemList.size();
 		return nextItem;
 	}
-	
-	public long getIdCounter() { // 17.01. Swen neu angelegt für ID counter
-		return idCounter;
+
+
+	public final void recalculate() { //TODO muss der public sein?
+		calculateScoreAchieveable();
+		calculateReachability();
 	}
 	
-	
-	 //Swen19.01: Diese Methode lege ich für Interview.proceedInterview()  an. ( nachhttp://stackoverflow.com/questions/29798512/displaying-and-manipulating-arraylist-in-java-swing-gui)  GUI braucht Question eine Methode, welche die Fragen ausliest;
-	//public void questiongiveAnswers() {
-	//	
-	//	 JList<String> currentanswers = new JList<>(itemList.toArray(new String[0]));
-	//}
-			
-			
-		
-		
-		
-	
-			
-	//public void ArrayList<SurveyTreeAbstract> itemList giveSize(); {  // 19.01.;-(( Ich möchte einen integer kriegen, den ich in eineInstanzvariable schreibe, auf welche ich vom GUI her zugreifen kann (moment, brauche ich das wirklich? zählen könnte ich auch mit der Schleife von giveitems()? 
-		 
-		//int size = itemList.size();
-		  
-		//System.out.println(size);
-		
-	 //}
-		//int item = item.getsize();	
-			
-			
-			
-			
-			
-			
-	
+	protected void calculateReachability() {
+		boolean unreachable = false;
+		if (owner != null) {
+			if (owner.isUnreachable()){
+				unreachable = true;
+			} else {
+				if (getMinOwnerScoreRequired() && getMaxOwnerScoreAllowed() && (getMinOwnerScore() > getMaxOwnerScore())) {
+					unreachable = true;
+				} else {
+					if (getMinOwnerScoreRequired()) {
+						int maxScoreLeft = 0;
+						for (SurveyTreeAbstract t : owner.itemList) {
+							if (t.getSort() < sort) {
+								maxScoreLeft += t.getMaxScoreAchieveable();
+							}
+						}
+						unreachable = (maxScoreLeft < getMinOwnerScore());
+					}
+					if (!unreachable && (getMaxOwnerScoreAllowed())) {
+						int minScoreLeft = 0;
+						for (SurveyTreeAbstract t : owner.itemList) {
+							if (t.getSort() < sort) {
+								minScoreLeft += t.getMinScoreAchieveable();
+							}
+						}
+						unreachable = (minScoreLeft > getMaxOwnerScore());
+					}
+				}
+			}
+		}
+		if (unreachable != this.unreachable) {
+			stateChanged = true;
+		}
+		this.unreachable = unreachable;
 	}
 	
+	protected final void calculateScoreAchieveable() {
+		int oldMinScore = minScoreAchieveable;
+		int oldMaxScore = maxScoreAchieveable;
+		calcMinScoreAchieveable();
+		calcMaxScoreAchieveable();
+		if (unreachable) {
+			minScoreAchieveable = 0;
+			maxScoreAchieveable = 0;
+		}
+		if ((oldMinScore != minScoreAchieveable) || (oldMaxScore != maxScoreAchieveable)) {
+			stateChanged = true;
+		}
+	}
 	
+	final boolean consumeStateChanged() {
+		boolean changed = stateChanged;
+		stateChanged = false;
+		if (changed) {
+			expose();
+		}
+		return changed;
+	}
+	
+	protected final void expose() {
+		recalculate();
+		recalculateItems();
+		if (owner != null) {
+			owner.expose();
+		}
+	}
+	
+	protected void recalculateItems() {
+		if (!isEmpty()) {
+			boolean itemStateChanged = false;
+			for (SurveyTreeAbstract t : itemList) {
+				t.recalculate();
+				if (t.consumeStateChanged()) {
+					itemStateChanged = true;
+				}
+			}
+			if (itemStateChanged) {
+				expose();
+			}
+		}
+	}
+	
+
 }

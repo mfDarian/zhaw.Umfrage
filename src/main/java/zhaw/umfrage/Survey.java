@@ -13,26 +13,42 @@ import java.util.ArrayList;
 public class Survey extends SurveyTreeAbstract{
 	
 	private static final long serialVersionUID = 1L;
+	private int nextAnswerId;
+	private int nextQuestionId;
+	private int nextQuestionnaireId;
+	private boolean frozen;
 	
 	public Survey(String text) {
-		super(text, null);
+		super(text, null, null);
+		nextQuestionnaireId = 0;
+		nextQuestionId = 0;
+		nextAnswerId = 0;
 	}
 	
 	@Override
-	public SurveyTreeAbstract insertItem(String text) {
-		Questionnaire q = new Questionnaire(this, text);
+	public SurveyTreeAbstract insertItem(String text) throws SurveyFrozenException  {
+		Questionnaire q = new Questionnaire(this, text, nextQuestionnaireId());
 		super.addItem(q);
 		return q;
 		
 	}
 	
+	
 	@Override
-	public SurveyTreeAbstract insertItem() {
+	public SurveyTreeAbstract insertItem() throws SurveyFrozenException  {
 		return insertItem("New Questionnaire");
 	}
 	
-	public void clear() {
-		itemList = new ArrayList<>();
+
+	public void clear() throws SurveyFrozenException {
+		if (frozen) {
+			throw new SurveyFrozenException();
+		}
+		for (SurveyTreeAbstract t : itemList) {
+			t.owner = null;
+		}
+		itemList.clear();
+		expose();
 	}
 	
 	// Temporär hier
@@ -60,6 +76,38 @@ public class Survey extends SurveyTreeAbstract{
 	}
 	
 	
+	public void freeze() throws UnreachableItemsException {
+		if (frozen) {
+			return;
+		}
+		int unreachableCount = 0;
+		for (SurveyTreeAbstract questionnaire : getItemList()) {
+			if (questionnaire.isUnreachable()) {
+				unreachableCount++;
+			}
+			for (SurveyTreeAbstract question : questionnaire.getItemList()) {
+				if (question.isUnreachable()) {
+					unreachableCount++;
+				}
+				for (SurveyTreeAbstract answer : question.getItemList()) {
+					if (answer.isUnreachable()) {
+						unreachableCount++;
+					}
+				}
+			}
+		}
+		if (unreachableCount != 0) {
+			throw new UnreachableItemsException(this, unreachableCount);
+		} else {
+			frozen = true;
+		}
+		
+	}
+	
+	public boolean isFrozen() {
+		return frozen;
+	}
+	
 	public void printChain() {
 		System.out.println(getText());
 		for (SurveyTreeAbstract questionnaire : getItemList()) {
@@ -73,8 +121,25 @@ public class Survey extends SurveyTreeAbstract{
 		}
 	}
 
+	protected int nextQuestionnaireId() {
+		return ++nextQuestionnaireId;
+	}
+	
+	protected int nextQuestionId() {
+		return ++nextQuestionId;
+	}
+	
+	@Override
+	protected int nextAnswerId() {
+		return ++nextAnswerId;
+	}
 
-
+	@Override
+	public boolean isReachable() {
+		return true;
+	}
+	
+	
 
 	
 }

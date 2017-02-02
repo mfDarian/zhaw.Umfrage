@@ -13,7 +13,7 @@ public class QuestionAnswerCountException extends Exception {
 	private int minAnswers;
 	private int maxAnswers;
 
-	public QuestionAnswerCountException(Question q) {
+	protected QuestionAnswerCountException(Question q) {
 		minAnswers = q.getMinAnswersToChose();
 		maxAnswers = q.getMaxAnswersToChose();
 	}
@@ -48,4 +48,13 @@ public class QuestionAnswerCountException extends Exception {
 		return exceptionText;
 	}
 
+	public final int getMinAnswers() {
+		return minAnswers;
+	}
+
+	public final int getMaxAnswers() {
+		return maxAnswers;
+	}
+
+	
 }

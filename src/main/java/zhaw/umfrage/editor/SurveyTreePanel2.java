@@ -40,7 +40,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import zhaw.umfrage.*;
 
-class SurveyTreePanel extends JPanel {
+class SurveyTreePanel2 extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
 	private SurveyEditor owner;
@@ -63,7 +63,7 @@ class SurveyTreePanel extends JPanel {
 	
 	private JPopupMenu popUp;
 	
-	protected SurveyTreePanel(SurveyEditor owner, Survey survey) {
+	protected SurveyTreePanel2(SurveyEditor owner, Survey survey) {
 		super(new GridLayout(1,2));
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		this.owner = owner;
@@ -95,11 +95,9 @@ class SurveyTreePanel extends JPanel {
 		
 		//Setup Detail Panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
-        
         Border bo = BorderFactory.createEmptyBorder(0, 20, 20, 20);
-        //Border bo2 = BorderFactory.createTitledBorder(bo, "Textli", 1, 1, getFont()); //TODO
-        detailPanel.setBorder(bo);
-        
+        Border bo2 = BorderFactory.createTitledBorder(bo, "Textli", 1, 1, getFont()); //TODO
+        detailPanel.setBorder(bo2);
 
         
         GridBagConstraints gbc = new GridBagConstraints();
@@ -250,8 +248,6 @@ class SurveyTreePanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 12;
         gbc.gridwidth = 3;
-        gbc.weighty = 10;
-        gbc.anchor = GridBagConstraints.FIRST_LINE_START;
         detailPanel.add(saveButton, gbc);
         
         add(detailPanel);
