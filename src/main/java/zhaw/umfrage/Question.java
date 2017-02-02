@@ -104,7 +104,6 @@ public class Question extends SurveyTreeAbstract {
 		this.minAnswersToChose = minAnswersToChose;
 		// auto-set maxAnswersToChose if not 0 and below mew minimum
 		if (maxAnswersToChose != 0 && maxAnswersToChose < this.minAnswersToChose) {
-			System.out.println("Hey!");
 			setMaxAnswersToChose(this.minAnswersToChose);
 		} else {
 			expose();
@@ -122,7 +121,6 @@ public class Question extends SurveyTreeAbstract {
 		if (maxAnswersToChose > itemList.size() || maxAnswersToChose < 0) {
 			return false;
 		}
-		System.out.println("Setting max: " + maxAnswersToChose); //TODO Wohl ein Fehler im Editor GUI. Wird korrekt vom Minimum gehoben, aber das GUI schmeisst nachher nochmal den alten Wert rein...
 		this.maxAnswersToChose = maxAnswersToChose;
 		expose();
 		try {
