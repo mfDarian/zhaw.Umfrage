@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.io.Serializable;
 
 /**
- * @author Darian
+ * @author Daniel Langhart
  *
  */
 public abstract class SurveyTreeAbstract implements Serializable, Comparable<SurveyTreeAbstract> {
@@ -315,12 +315,23 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 		return !hasItems();
 	}
 	
+	//TODO zeigen
 	public boolean isReachable() {
+		//assume not reachable
 		boolean reachable = false;
+		//can not be reachable if unreachable
 		if (!unreachable) {
+			//owner must be reachable
 			if (owner.isReachable()) {
-				if (!getMinOwnerScoreRequired() || (getMinOwnerScoreRequired() && owner.getScore() >= getMinOwnerScore())) {
-					if (!getMaxOwnerScoreAllowed() || (getMaxOwnerScoreAllowed() && owner.getScore() <= getMaxOwnerScore())) {
+				//if no owner minimum score is required...
+				if (!getMinOwnerScoreRequired()
+						//...or it is required but owners score is at least the required value...
+						|| (getMinOwnerScoreRequired() && owner.getScore() >= getMinOwnerScore())) {
+					//and no owner maximum is defined...
+					if (!getMaxOwnerScoreAllowed()
+						//...or there is a maximum but the owners score is at most the allowed value...
+						|| (getMaxOwnerScoreAllowed() && owner.getScore() <= getMaxOwnerScore())) {
+						//...then finally we are reachable :-)
 						return true;
 					}
 				}
@@ -330,6 +341,9 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 	
 	protected void calcMinScoreAchieveable() {
+		// for common SurveyTreeAbstract items the score is the sum of all reachable items
+		// this method must be overwritten by the Question Class since there are more
+		// relevant factors
 		int minScore = 0;
 		if (itemList != null) {
 			for (SurveyTreeAbstract t : itemList) {
@@ -382,11 +396,12 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 
 
-	public final void recalculate() { //TODO muss der public sein?
+	protected final void recalculate() {
 		calculateScoreAchieveable();
 		calculateReachability();
 	}
 	
+	//TODO zeigen
 	protected void calculateReachability() {
 		boolean unreachable = false;
 		if (owner != null) {
@@ -424,31 +439,46 @@ public abstract class SurveyTreeAbstract implements Serializable, Comparable<Sur
 	}
 	
 	protected final void calculateScoreAchieveable() {
+		// store min and max to compare later
 		int oldMinScore = minScoreAchieveable;
 		int oldMaxScore = maxScoreAchieveable;
+		// recalc min and max achieveable
 		calcMinScoreAchieveable();
 		calcMaxScoreAchieveable();
 		if (unreachable) {
 			minScoreAchieveable = 0;
 			maxScoreAchieveable = 0;
 		}
+		// compare ot see if state has changed
 		if ((oldMinScore != minScoreAchieveable) || (oldMaxScore != maxScoreAchieveable)) {
 			stateChanged = true;
 		}
 	}
 	
+	//TODO zeigen
 	final boolean consumeStateChanged() {
 		boolean changed = stateChanged;
+		//consuming means that a true value will always be left back as false
+		//this is essential for not getting an endless loop!
 		stateChanged = false;
+		//if we have changed our state before and were asked if so, we are getting exposed for recalculation chain
+		//in others words we got caught being out of sync
 		if (changed) {
 			expose();
 		}
+		//our finder will get a true return if we were to recalculate ourselves and our items
 		return changed;
 	}
 	
 	protected final void expose() {
 		recalculate();
 		recalculateItems();
+		//let our owner be exposed after we were so it will...
+		//...call "recalculateItems" which eventually exposes our hierarchically neighbors...
+		//...which then could trigger resonance back to our owner...
+		//...which then could possibly affect our own state...
+		//...which then forces us to be exposed again.
+		//this chain will stop as soon as a whole cycle passes through without any changing states
 		if (owner != null) {
 			owner.expose();
 		}

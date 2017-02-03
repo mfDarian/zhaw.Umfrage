@@ -1,6 +1,5 @@
 package zhaw.umfrage;
 
-import zhaw.umfrage.*;
 import java.util.ArrayList;
 
 public class Summary {

@@ -1,7 +1,6 @@
 package zhaw.umfrage;
 
 import java.util.ArrayList;
-import zhaw.umfrage.*;
 
 public class ConsultationController {
 	

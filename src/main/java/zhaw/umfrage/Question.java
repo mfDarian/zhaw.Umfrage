@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * @author Darian
+ * @author Daniel Langhart
  *
  */
 public class Question extends SurveyTreeAbstract {
@@ -170,17 +170,22 @@ public class Question extends SurveyTreeAbstract {
 	}
 
 	@Override
+	//TODO zeigen
 	protected void calcMinScoreAchieveable() {
 		if (itemList == null || itemList.isEmpty()) {
+			// first try the cheap way
 			minScoreAchieveable = 0;
 		} else {
-			
+			// we need a list of our answers that is sorted by score (ascending)
 			ArrayList<Answer> answersByScoreChosen = new ArrayList<>();
 			for (SurveyTreeAbstract t : itemList) {
 				answersByScoreChosen.add((Answer)t);
 			}
+			// sort with special comparator
 			Collections.sort(answersByScoreChosen, new AnswersByScoreChosen(false));
 			
+			// now do simulations of divers answer selections, respecting the settings
+			// always taking the ones with lowest score first
 			ArrayList<Answer> chosen = new ArrayList<>();
 			int simCount = 0;
 			int lowestScore = 0;
@@ -192,14 +197,17 @@ public class Question extends SurveyTreeAbstract {
 				for (int i = 0; i < answerCount; i++) {
 					chosen.add(answersByScoreChosen.get(i));
 				}
+				// only reachable answers can be chosen!
 				for (Answer a : chosen) {
 					if (!a.isUnreachable()) {
 						simulatedScore += a.getScoreIfChosen();
 					}
 				}
 				if (simCount == 0) {
+					// the first simulation score must always be set as the lowest for comparing later
 					lowestScore = simulatedScore;
 				}
+				// after simulation actualize the lowest score we could achieve
 				lowestScore = Math.min(lowestScore, simulatedScore);
 				answerCount++;
 				simCount++;
