@@ -292,7 +292,6 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 	@Override
 	public void summaryLoaded(Summary summary) {
 		// TODO Auto-generated method stub
-		System.out.println("Summary Loaded");
 		this.summary = summary;
 		startButton.setEnabled(true);
 		//summaryUpdated();
@@ -301,21 +300,18 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 	@Override
 	public void summaryUpdated() {
 		// TODO Auto-generated method stub
-		System.out.println("Summary Updated");
 		interviewCount.setText(summary.getInterviewCount().toString());
 	}
 
 	@Override
 	public void showQuestionnaire(Questionnaire questionnaire) {
 		// TODO Auto-generated method stub
-		System.out.println("Questionnaire anzeigen: " + questionnaire);
 		questionnairePanel.setQuestionnaireText(questionnaire.getText());
 	}
 
 	@Override
 	public void showQuestion(Question question) {
 		// TODO Auto-generated method stub
-		System.out.println("Question anzeigen: " + question);
 		questionPanel.setQuestionText(question.getText());
 		answerPanel.clear();
 	}
@@ -323,7 +319,6 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 	@Override
 	public void showAnswer(Answer answer) {
 		// TODO Auto-generated method stub
-		System.out.println("Answer anzeigen: " + answer);
 		answerPanel.addAnswerBox(new AnswerBox(answer));
 		frame.pack();
 	}

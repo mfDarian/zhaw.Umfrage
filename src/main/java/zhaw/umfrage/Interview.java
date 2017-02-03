@@ -6,8 +6,6 @@ package zhaw.umfrage;
 import java.io.Serializable;
 import java.util.HashSet;
 
-import zhaw.umfrage.*;
-
 /**
  * @author Darian
  *

@@ -97,6 +97,9 @@ public class Question extends SurveyTreeAbstract {
 	}
 
 	public final boolean setMinAnswersToChose(int minAnswersToChose) throws SurveyFrozenException {
+		if (minAnswersToChose == this.minAnswersToChose) {
+			return false;
+		}
 		checkRootNotFrozen();
 		if (minAnswersToChose > itemList.size() || minAnswersToChose < 0) {
 			return false;
@@ -117,12 +120,16 @@ public class Question extends SurveyTreeAbstract {
 	}
 
 	public final boolean setMaxAnswersToChose(int maxAnswersToChose) throws SurveyFrozenException {
+		if (maxAnswersToChose == this.maxAnswersToChose) {
+			return false;
+		}
 		checkRootNotFrozen();
 		if (maxAnswersToChose > itemList.size() || maxAnswersToChose < 0) {
 			return false;
 		}
 		this.maxAnswersToChose = maxAnswersToChose;
 		expose();
+		
 		try {
 			setAnswered(false);
 		} catch (QuestionAnswerCountException ex) {
