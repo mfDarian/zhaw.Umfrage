@@ -6,8 +6,6 @@ package zhaw.umfrage;
 import java.io.Serializable;
 import java.util.HashSet;
 
-import zhaw.umfrage.*;
-
 /**
  * @author Darian
  *
@@ -54,6 +52,7 @@ public class Interview implements Serializable {
 	
 	public void addQuestion(Question q) {
 		questionsAsked.add(q.getId());
+		System.out.println("Question " + q + " added to interview");
 	}
 	
 	public void addAnswers(Question q) {
@@ -61,7 +60,7 @@ public class Interview implements Serializable {
 			Answer a = (Answer) t;
 			if (a.isChosen()) {
 				answersChosen.add(a.getId());
-				System.out.println("Answer added!");
+				System.out.println("Answer " + a + " added to interview");
 			}
 		}
 	}
@@ -72,7 +71,7 @@ public class Interview implements Serializable {
 	
 	public void freeze() {
 		score = survey.getScore();
-		System.out.println("Interview eingefroren");
+		System.out.println("Interview frozen");
 		frozen = true;
 	}
 	

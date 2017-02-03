@@ -1,6 +1,6 @@
 package zhaw.umfrage.consultation;
 
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -30,6 +31,8 @@ import zhaw.umfrage.*;
 
 public class InterviewPlayer extends JPanel implements ConsultationView, ActionListener {
 	
+	private static final long serialVersionUID = 1L;
+
 	static String OPEN_COMMAND = "open";
 	
 	private JFrame frame;
@@ -78,7 +81,7 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
         answerPanel = new AnswerPanel();
         mainPanel.add(answerPanel);
         
-        forwardButton = new JButton("Weiter");
+        forwardButton = new JButton("Proceed");
         forwardButton.setEnabled(false);
         startButton = new JButton("Start");
         startButton.setEnabled(false);
@@ -93,7 +96,7 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 					controller.proceed();
 					answerPanel.repaint();
 				} catch (QuestionAnswerCountException ex) {
-					System.out.println(ex);
+					JOptionPane.showMessageDialog(frame, ex);
 				}
 			}});
         
@@ -108,14 +111,14 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 						System.out.println(ex);
 					}
 				} else {
-					System.out.println("Kein Survey geladen!");
+					JOptionPane.showMessageDialog(frame, "no Survey File is loaded");
 				}
 			}});
         
         mainPanel.add(forwardButton);
         mainPanel.add(startButton);
         
-        interviewCount = new JLabel("0");
+        interviewCount = new JLabel("Interviews in Summary: 0");
         mainPanel.add(interviewCount);
         
         controller.addView(this);
@@ -144,8 +147,9 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 
     class QuestionnairePanel extends JPanel {
     	
-    	private JTextArea questionnaireText;
-    	private Font f = new Font("Calibri", 48, 48);
+		private static final long serialVersionUID = 1L;
+		private JTextArea questionnaireText;
+    	private Font f = new Font("Calibri", 30, 30);
     	
     	QuestionnairePanel() {
     		setFont(f);
@@ -161,8 +165,9 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
     
     class QuestionPanel extends JPanel {
     	
-    	private JTextArea questionText;
-    	private Font f = new Font("Calibri", 48, 48);
+		private static final long serialVersionUID = 1L;
+		private JTextArea questionText;
+    	private Font f = new Font("Calibri", 24, 24);
     	
     	QuestionPanel() {
     		setFont(f);
@@ -178,8 +183,8 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
     
     class AnswerPanel extends JPanel {
     	
-    	private JScrollPane scrollPane;
-    	private Font f = new Font("Arial", 30, 30);
+		private static final long serialVersionUID = 1L;
+    	private Font f = new Font("Calibri", 20, 20);
     	
     	AnswerPanel () {
     		this.setLayout(new GridLayout(0,1));
@@ -238,15 +243,13 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
         JFrame frame = new JFrame("Interview");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        Insets s = new Insets(2,10,2,10);
-        Insets s2 = new Insets(0,-30,0,10);
+
 
         JMenuBar menuBar = new JMenuBar();
         JMenu menuFile = new JMenu("File");
-        menuFile.setMargin(s);
+
         JMenuItem menuOpen = new JMenuItem("Open");
         menuOpen.setActionCommand(OPEN_COMMAND);
-        menuOpen.setMargin(s2);
 		menuFile.add(menuOpen);
 		menuBar.add(menuFile);
 		
@@ -262,7 +265,7 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 
         //Display the window.
         //frame.setMinimumSize(new Dimension(1000, 1000));
-        frame.setSize(100,100);
+        frame.setMinimumSize(new Dimension(500,350));
         frame.pack();
         frame.setLocationByPlatform(true);
         frame.setVisible(true);
@@ -300,7 +303,7 @@ public class InterviewPlayer extends JPanel implements ConsultationView, ActionL
 	@Override
 	public void summaryUpdated() {
 		// TODO Auto-generated method stub
-		interviewCount.setText(summary.getInterviewCount().toString());
+		interviewCount.setText("Interviews in Summary: " +summary.getInterviewCount().toString());
 	}
 
 	@Override

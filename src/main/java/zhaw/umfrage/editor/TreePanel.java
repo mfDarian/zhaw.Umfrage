@@ -2,16 +2,15 @@ package zhaw.umfrage.editor;
 
 import zhaw.umfrage.*;
 
-
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 
-import java.awt.GridLayout;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -26,10 +25,11 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-class TreePanel extends JPanel {
+class TreePanel extends JPanel implements DesignView {
 
 	private static final long serialVersionUID = 1L;
-	private SurveyEditor2 editor;
+	private JFrame messageFrame;
+	private DesignController controller;
 	private Survey survey;
 	private SurveyTreeNode root;
 	private SurveyTreeModel treeModel;
@@ -38,10 +38,12 @@ class TreePanel extends JPanel {
 	private Border border;
 	private ArrayList<SurveyTreeAbstract> collapsedObjects;
 	private SurveyTreeAbstract storedSelectedObject;
+	private ButtonPanel buttonPanel;
+	private boolean showScore, showMinMaxScore;
 
-	TreePanel(SurveyEditor2 editor) {
-		super(new GridLayout(1,1));
-		this.editor = editor;
+	TreePanel(JFrame messageFrame) {
+		super(new BorderLayout());
+		this.messageFrame = messageFrame;
 		tree = new JTree();
 		tree.setModel(null);
 		tree.setEditable(true);
@@ -55,21 +57,51 @@ class TreePanel extends JPanel {
 		collapsedObjects = new ArrayList<>();
 		scrollPane = new JScrollPane(tree);
 		scrollPane.setBorder(border);
-		add(scrollPane);
+		add(scrollPane, BorderLayout.CENTER);
+		buttonPanel = new ButtonPanel(this.messageFrame);
+		add(buttonPanel, BorderLayout.SOUTH);
+		
+	}
+	
+	void setController(DesignController c) {
+		if (controller != null) {
+			controller.removeView(this);
+		}
+		controller = c;
+		controller.addView(this);
+		buttonPanel.setController(c);
+	}
+	
+	void toggleShowScore() {
+		showScore = !showScore;
+		reload();
+	}
+	
+	void toggleShowMinMaxScore() {
+		showMinMaxScore = !showMinMaxScore;
+		reload();
 	}
 	
 	void setSurvey(Survey survey) {
+		storeCollapseStatus();
 		this.survey = survey;
 		root = new SurveyTreeNode(this.survey);
 		treeModel = new SurveyTreeModel(root);
 		tree.setModel(treeModel);
+		if (survey.isFrozen()) {
+			tree.setBackground(messageFrame.getBackground());
+		} else {
+			tree.setBackground(Color.WHITE);
+		}
 		drawTree();
 	}
 	
 	void reload() {
-		storeCollapseStatus();
-		treeModel.reload();
-		restoreCollapseStatus();
+		if (survey != null) {
+			storeCollapseStatus();
+			treeModel.reload();
+			restoreCollapseStatus();
+		}
 	}
 	
 	private void drawTree() {
@@ -95,7 +127,7 @@ class TreePanel extends JPanel {
 	    
 	    treeModel.reload();
 	    tree.repaint();
-	    expandAll();
+	    restoreCollapseStatus();
 
 	}
 
@@ -151,6 +183,12 @@ class TreePanel extends JPanel {
 		}
 	}
 	
+	private void expandActualPath() {
+		if (tree.isCollapsed(tree.getSelectionPath())) {
+			tree.expandPath(tree.getSelectionPath());
+		}
+	}
+	
 	private SurveyTreeAbstract getPathObject(TreePath path) {
 		if (path == null) {
 			return null;
@@ -177,7 +215,6 @@ class TreePanel extends JPanel {
 			} else {
 				SurveyTreeAbstract t = (SurveyTreeAbstract) userObject;
 				s = t.toString();
-				/*
 				if (showScore && showMinMaxScore) {
 					s += " [" + t.getMinScoreAchieveable() + " <= " + t.getScore() + " <= " + t.getMaxScoreAchieveable() + "]";
 				} else if (showScore) {
@@ -185,7 +222,6 @@ class TreePanel extends JPanel {
 				} else if (showMinMaxScore) {
 					s += " [" + t.getMinScoreAchieveable() + " / " + t.getMaxScoreAchieveable() + "]";
 				}
-				*/
 			}
 			return s;
 		}
@@ -206,14 +242,19 @@ class TreePanel extends JPanel {
 			String text = newValue.toString();
 			if (text != null) {
 				storeCollapseStatus();
-				SurveyTreeNode node = (SurveyTreeNode) path.getLastPathComponent();
-				SurveyTreeAbstract s = (SurveyTreeAbstract) node.getUserObject();
-				editor.notifyTextChange(text);
-				treeModel.reload();
-				restoreCollapseStatus();
+				//SurveyTreeNode node = (SurveyTreeNode) path.getLastPathComponent();
+				//SurveyTreeAbstract s = (SurveyTreeAbstract) node.getUserObject();
+				try {
+					controller.setText(text);
+				} catch (SurveyFrozenException e) {
+					System.out.println(e); //TODO
+				} finally {
+					treeModel.reload();
+					restoreCollapseStatus();
+				}
 			}
 		}
-    	
+
     }
 	
 	
@@ -230,6 +271,7 @@ class TreePanel extends JPanel {
         public SurveyTreeCellRenderer() {
             
         	surveyIcon = new ImageIcon("Icons/survey-icon.png");
+        	//surveyIcon = new ImageIcon(java.awt.Toolkit.getDefaultToolkit().getClass().getResource("/Resource/survey-icon.png")); //TODO not working
         	questionnaireIcon = new ImageIcon("Icons/questionnaire-icon.png");
         	questionUnansweredIcon = new ImageIcon("Icons/question-unanswered-icon.png");
         	questionAnsweredIcon = new ImageIcon("Icons/question-answered-icon.png");
@@ -264,7 +306,9 @@ class TreePanel extends JPanel {
                 bg = new Color(255,185,185);
         	} else if (!nodeObject.isReachable()) {
             	bg = new Color(255,220,170);
-            } else {
+        	} else if (survey.isFrozen()) {
+        		bg = messageFrame.getBackground();
+        	} else {
             	bg = new Color(255,255,255);
             }
         	setBackgroundNonSelectionColor(bg);
@@ -283,12 +327,137 @@ class TreePanel extends JPanel {
     			node = (SurveyTreeNode) tree.getSelectionPath().getLastPathComponent();
     			userObject = (SurveyTreeAbstract) node.getUserObject();
     		}
-    		editor.notifySelectionChange(userObject);
+    		controller.selectItem(userObject);
 			
 
 		}
     	
     }
 
+    
+    /** Implementation of DesignView **/
+
+	@Override
+	public void selectionChanged(SurveyTreeAbstract item) {
+		selectItem(item);
+		
+	}
+
+	@Override
+	public void surveySelected(Survey survey) {
+		
+	}
+
+	@Override
+	public void questionnaireSelected(Questionnaire questionnaire) {
+		
+	}
+
+	@Override
+	public void questionSelected(Question question) {
+		
+	}
+
+	@Override
+	public void answerSelected(Answer answer) {
+		
+	}
+
+	@Override
+	public void itemAddable(boolean addable) {
+		
+	}
+
+	@Override
+	public void itemRemoveable(boolean removeable) {
+		
+	}
+	
+	@Override
+	public void sortUpPossible(boolean possible) {
+		
+	}
+	
+	@Override
+	public void sortDownPossible(boolean possible) {
+		
+	}
+
+	@Override
+	public void textChanged(String text) {
+		reload();
+		
+	}
+
+	@Override
+	public void itemCountChanged(int itemCount) {
+		setSurvey(survey);
+		expandActualPath();
+	}
+
+	@Override
+	public void minOwnerScoreRequiredSet(boolean isSet) {
+		
+	}
+
+	@Override
+	public void minOwnerScoreRequiredChanged(int scoreRequired) {
+		
+	}
+
+	@Override
+	public void maxOwnerScoreAllowedSet(boolean isSet) {
+		
+	}
+
+	@Override
+	public void maxOwnerScoreAllowedChanged(int maxScore) {
+		
+	}
+
+	@Override
+	public void minAnswersToChoseChanged(int minAnswers) {
+		
+	}
+
+	@Override
+	public void maxAnswersToChoseChanged(int maxAnswers) {
+		
+	}
+
+	@Override
+	public void scoreIfChosenChanged(int scoreIfChosen) {
+		
+	}
+
+	@Override
+	public void structureChanged(Survey root) {
+		setSurvey(root);
+		
+	}
+
+	@Override
+	public void surveyFrozen(boolean frozen) {
+		setSurvey(survey);
+		
+	}
+
+	@Override
+	public void answerChosenChanged(Answer answer, boolean chosen) {
+		reload();
+		
+	}
+
+	@Override
+	public void questionAnsweredChanged(Question question, boolean answered) {
+		reload();
+		
+	}
+	
+	@Override
+	public void statesMayHaveChanged() {
+		reload();
+		
+	}
 
 }

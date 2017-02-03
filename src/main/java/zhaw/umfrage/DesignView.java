@@ -11,27 +11,26 @@ public interface DesignView {
 	public void questionSelected(Question question);
 	
 	public void answerSelected(Answer answer);
-	
 
 	public void itemAddable(boolean addable);
 	
 	public void itemRemoveable(boolean removeable);
 	
-
+	public void sortUpPossible(boolean possible);
+	
+	public void sortDownPossible(boolean possible);
+	
 	public void textChanged(String text);
 	
-
 	public void itemCountChanged(int itemCount);
-
 
 	public void minOwnerScoreRequiredSet(boolean isSet);
 	
-
 	public void minOwnerScoreRequiredChanged(int scoreRequired);
 	
 	public void maxOwnerScoreAllowedSet(boolean isSet);
 	
-	public void maxOwnerScoreAllowedChanged(boolean scoreAllowed);
+	public void maxOwnerScoreAllowedChanged(int scoreAllowed);
 	
 	public void minAnswersToChoseChanged(int minAnswers);
 	
@@ -41,10 +40,12 @@ public interface DesignView {
 	
 	public void structureChanged(Survey root);
 	
-	public void surveyFrozen();
+	public void surveyFrozen(boolean frozen);
 	
 	public void answerChosenChanged(Answer answer, boolean chosen);
 	
 	public void questionAnsweredChanged(Question question, boolean answered);
+	
+	public void statesMayHaveChanged();
 
 }

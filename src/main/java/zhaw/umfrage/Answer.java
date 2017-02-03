@@ -53,6 +53,9 @@ public class Answer extends SurveyTreeAbstract {
 	public final void setScoreIfChosen(int scoreIfChosen) throws SurveyFrozenException {
 		checkRootNotFrozen();
 		this.scoreIfChosen = scoreIfChosen;
+		if (chosen) {
+			setScore(scoreIfChosen);
+		}
 		expose();
 	}
 
